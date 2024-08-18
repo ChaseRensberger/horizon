@@ -26,4 +26,6 @@ video_snapshots
 
 
 ## random thoughts
-I assume snapshots are important? also wtf is `favoriteCount`
+- I assume snapshots are important? also wtf is `favoriteCount`
+
+## stuff to do
