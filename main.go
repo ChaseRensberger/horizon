@@ -18,5 +18,5 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(channelSnapshot)
+	fmt.Println(*channelSnapshot)
 }
