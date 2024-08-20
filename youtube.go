@@ -57,7 +57,7 @@ func getCurrentChannelSnapshot(channelId string) (*Channel, error) {
 		return nil, fmt.Errorf("failed to fetch channel data: %d", resp.StatusCode)
 	}
 
-	var channelResponse ChannelResponse
+	var channelResponse ChannelStatisticsResponse
 	if err := json.NewDecoder(resp.Body).Decode(&channelResponse); err != nil {
 		return nil, err
 	}
@@ -73,33 +73,27 @@ func getCurrentChannelSnapshot(channelId string) (*Channel, error) {
 
 }
 
-func getChannelNameFromId(channelId string) (string, error) {
-	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
-	part := "snippet"
-	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, part, channelId)
-	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Accept", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+// func createChannelFromId(channelId string) (*Channel, error) {
+// 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
+// 	part := "snippet"
+// 	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, part, channelId)
+// 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	req.Header.Set("Accept", "application/json")
+// 	client := &http.Client{}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("failed to fetch channel data: %d", resp.StatusCode)
-	}
+// 	if resp.StatusCode != http.StatusOK {
+// 		return nil, fmt.Errorf("failed to fetch channel data: %d", resp.StatusCode)
+// 	}
 
-	var channelResponse ChannelResponse
-	if err := json.NewDecoder(resp.Body).Decode(&channelResponse); err != nil {
-		return "", err
-	}
-
-	return channelResponse.Items[0].ID, nil
-}
+// }
 
 func convertToInt(value string) int {
 	intValue, err := strconv.Atoi(value)

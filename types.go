@@ -12,7 +12,7 @@ type PageInfo struct {
 	ResultsPerPage int `json:"resultsPerPage"`
 }
 
-type ChannelItem struct {
+type ChannelStatisticsItem struct {
 	Kind       string `json:"kind"`
 	Etag       string `json:"etag"`
 	ID         string `json:"id"`
@@ -24,9 +24,9 @@ type ChannelItem struct {
 	} `json:"statistics"`
 }
 
-type ChannelResponse struct {
-	Kind     string        `json:"kind"`
-	Etag     string        `json:"etag"`
-	PageInfo PageInfo      `json:"pageInfo"`
-	Items    []ChannelItem `json:"items"`
+type ChannelStatisticsResponse struct {
+	Kind     string                  `json:"kind"`
+	Etag     string                  `json:"etag"`
+	PageInfo PageInfo                `json:"pageInfo"`
+	Items    []ChannelStatisticsItem `json:"items"`
 }

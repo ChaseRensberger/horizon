@@ -2,6 +2,8 @@
 channels
  - channel_id (PK)
  - channel_name
+ - country
+ - custom_url
 
 channel_snapshots
  - channel_snapshot_id (PK)
