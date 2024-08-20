@@ -13,10 +13,11 @@ func init() {
 }
 
 func main() {
-	channelSnapshot, err := getCurrentChannelSnapshot("UCYzV77unbAR8KiIoSm4zdUw")
+	channelId := "UCYzV77unbAR8KiIoSm4zdUw"
+	err := uploadChannelSnapshot(channelId)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println(*channelSnapshot)
+	fmt.Println("Channel snapshot uploaded successfully")
 }

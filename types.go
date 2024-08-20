@@ -17,10 +17,10 @@ type ChannelItem struct {
 	Etag       string `json:"etag"`
 	ID         string `json:"id"`
 	Statistics struct {
-		ViewCount             int  `json:"viewCount"`
-		SubscriberCount       int  `json:"subscriberCount"`
-		HiddenSubscriberCount bool `json:"hiddenSubscriberCount"`
-		VideoCount            int  `json:"videoCount"`
+		ViewCount             string `json:"viewCount"`
+		SubscriberCount       string `json:"subscriberCount"`
+		HiddenSubscriberCount bool   `json:"hiddenSubscriberCount"`
+		VideoCount            string `json:"videoCount"`
 	} `json:"statistics"`
 }
 
