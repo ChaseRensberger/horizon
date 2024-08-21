@@ -114,3 +114,59 @@ func createChannelFromId(db *sql.DB, channelId string) error {
 	return nil
 
 }
+
+func uploadVideoSnapshot(db *sql.DB, videoId string) error {
+	videoSnapshot, err := getCurrentVideoSnapshot(videoId)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	stmt, err := db.Prepare("INSERT INTO video_snapshots (view_count, like_count, comment_count) VALUES (?, ?, ?)")
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(videoSnapshot.ViewCount, videoSnapshot.LikeCount, videoSnapshot.CommentCount)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
+	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
+	part := "statistics"
+	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, part, videoId)
+	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch video data: %d", resp.StatusCode)
+	}
+
+	var videoResponse VideoStatisticsResponse
+	if err := json.NewDecoder(resp.Body).Decode(&videoResponse); err != nil {
+		return nil, err
+	}
+
+	video := &VideoSnapshot{
+		VideoID:      videoResponse.Items[0].ID,
+		ViewCount:    videoResponse.Items[0].Statistics.ViewCount,
+		LikeCount:    videoResponse.Items[0].Statistics.LikeCount,
+		CommentCount: videoResponse.Items[0].Statistics.CommentCount,
+	}
+
+	return video, nil
+}

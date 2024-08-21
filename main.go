@@ -19,8 +19,13 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	channelId := "UCYzV77unbAR8KiIoSm4zdUw"
+	// channelId := "UCYzV77unbAR8KiIoSm4zdUw"
+	videoId := "3GAAIKDUMLg"
 
-	createChannelFromId(db, channelId)
+	err = uploadVideoSnapshot(db, videoId)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 }
