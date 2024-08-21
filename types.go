@@ -109,14 +109,21 @@ type VideoStatistic struct {
 }
 
 type VideoSnippet struct {
-	publishedAt          string `json:"publishedAt"`
-	channelID            string `json:"channelId"`
-	title                string `json:"title"`
-	description          string `json:"description"`
-	ChannelTitle         string `json:"channelTitle"`
-	categoryID           string `json:"categoryId"`
-	liveBroadcastContent string `json:"liveBroadcastContent"`
-	defaultAudioLanguage string `json:"defaultAudioLanguage"`
+	publishedAt          string      `json:"publishedAt"`
+	channelID            string      `json:"channelId"`
+	title                string      `json:"title"`
+	description          string      `json:"description"`
+	ChannelTitle         string      `json:"channelTitle"`
+	categoryID           string      `json:"categoryId"`
+	liveBroadcastContent string      `json:"liveBroadcastContent"`
+	defaultAudioLanguage string      `json:"defaultAudioLanguage"`
+	thumbnails           []Thumbnail `json:"thumbnails"`
+}
+
+type Thumbnail struct {
+	URL    string `json:"url"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
 }
 
 type PageInfo struct {
