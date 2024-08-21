@@ -30,103 +30,81 @@ type VideoSnapshot struct {
 
 // RESPONSE TYPES
 
+type YoutubeResponse struct {
+	Kind     string `json:"kind"`
+	ETag     string `json:"etag"`
+	PageInfo struct {
+		TotalResults   int `json:"totalResults"`
+		ResultsPerPage int `json:"resultsPerPage"`
+	} `json:"pageInfo"`
+}
+
+type YoutubeResponseItems struct {
+	Kind string `json:"kind"`
+	ETag string `json:"etag"`
+	ID   string `json:"id"`
+}
+
 type ChannelStatisticsResponse struct {
-	Kind     string                 `json:"kind"`
-	Etag     string                 `json:"etag"`
-	PageInfo PageInfo               `json:"pageInfo"`
-	Items    []ChannelStatisticItem `json:"items"`
+	YoutubeResponse
+	Items []struct {
+		YoutubeResponseItems
+		Statistics struct {
+			ViewCount             string `json:"viewCount"`
+			SubscriberCount       string `json:"subscriberCount"`
+			HiddenSubscriberCount bool   `json:"hiddenSubscriberCount"`
+			VideoCount            string `json:"videoCount"`
+		}
+	} `json:"items"`
 }
 
 type ChannelSnippetResponse struct {
-	Kind     string               `json:"kind"`
-	Etag     string               `json:"etag"`
-	PageInfo PageInfo             `json:"pageInfo"`
-	Items    []ChannelSnippetItem `json:"items"`
+	YoutubeResponse
+	Items []struct {
+		YoutubeResponseItems
+		Snippet struct {
+			Title       string `json:"title"`
+			Description string `json:"description"`
+			CustomURL   string `json:"customUrl"`
+			PublishedAt string `json:"publishedAt"`
+			Country     string `json:"country"`
+		}
+	} `json:"items"`
 }
 
 type VideoStatisticsResponse struct {
-	Kind     string               `json:"kind"`
-	Etag     string               `json:"etag"`
-	PageInfo PageInfo             `json:"pageInfo"`
-	Items    []VideoStatisticItem `json:"items"`
+	YoutubeResponse
+	Items []struct {
+		YoutubeResponseItems
+		Statistics struct {
+			ViewCount     string `json:"viewCount"`
+			LikeCount     string `json:"likeCount"`
+			FavoriteCount string `json:"favoriteCount"`
+			CommentCount  string `json:"commentCount"`
+		}
+	} `json:"items"`
 }
 
 type VideoSnippetResponse struct {
-	Kind     string             `json:"kind"`
-	Etag     string             `json:"etag"`
-	PageInfo PageInfo           `json:"pageInfo"`
-	Items    []VideoSnippetItem `json:"items"`
-}
-
-type ChannelStatisticItem struct {
-	Kind       string           `json:"kind"`
-	Etag       string           `json:"etag"`
-	ID         string           `json:"id"`
-	Statistics ChannelStatistic `json:"statistics"`
-}
-
-type ChannelSnippetItem struct {
-	Kind    string         `json:"kind"`
-	Etag    string         `json:"etag"`
-	ID      string         `json:"id"`
-	Snippet ChannelSnippet `json:"snippet"`
-}
-
-type VideoStatisticItem struct {
-	Kind       string         `json:"kind"`
-	Etag       string         `json:"etag"`
-	ID         string         `json:"id"`
-	Statistics VideoStatistic `json:"statistics"`
-}
-
-type VideoSnippetItem struct {
-	Kind    string       `json:"kind"`
-	Etag    string       `json:"etag"`
-	ID      string       `json:"id"`
-	Snippet VideoSnippet `json:"snippet"`
-}
-
-type ChannelStatistic struct {
-	ViewCount             string `json:"viewCount"`
-	SubscriberCount       string `json:"subscriberCount"`
-	HiddenSubscriberCount bool   `json:"hiddenSubscriberCount"`
-	VideoCount            string `json:"videoCount"`
-}
-
-type ChannelSnippet struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	CustomURL   string `json:"customUrl"`
-	PublishedAt string `json:"publishedAt"`
-	Country     string `json:"country"`
-}
-
-type VideoStatistic struct {
-	ViewCount     string `json:"viewCount"`
-	LikeCount     string `json:"likeCount"`
-	FavoriteCount string `json:"favoriteCount"`
-	CommentCount  string `json:"commentCount"`
-}
-
-type VideoSnippet struct {
-	publishedAt          string      `json:"publishedAt"`
-	channelID            string      `json:"channelId"`
-	title                string      `json:"title"`
-	description          string      `json:"description"`
-	ChannelTitle         string      `json:"channelTitle"`
-	categoryID           string      `json:"categoryId"`
-	liveBroadcastContent string      `json:"liveBroadcastContent"`
-	defaultAudioLanguage string      `json:"defaultAudioLanguage"`
-	thumbnails           []Thumbnail `json:"thumbnails"`
+	YoutubeResponse
+	Items []struct {
+		YoutubeResponseItems
+		Snippet struct {
+			publishedAt          string      `json:"publishedAt"`
+			channelID            string      `json:"channelId"`
+			title                string      `json:"title"`
+			description          string      `json:"description"`
+			ChannelTitle         string      `json:"channelTitle"`
+			categoryID           string      `json:"categoryId"`
+			liveBroadcastContent string      `json:"liveBroadcastContent"`
+			defaultAudioLanguage string      `json:"defaultAudioLanguage"`
+			thumbnails           []Thumbnail `json:"thumbnails"`
+		}
+	} `json:"items"`
 }
 
 type Thumbnail struct {
 	URL    string `json:"url"`
 	Width  int    `json:"width"`
 	Height int    `json:"height"`
-}
-
-type PageInfo struct {
-	TotalResults   int `json:"totalResults"`
-	ResultsPerPage int `json:"resultsPerPage"`
 }
