@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/joho/godotenv"
@@ -13,11 +14,13 @@ func init() {
 }
 
 func main() {
-	channelId := "UCYzV77unbAR8KiIoSm4zdUw"
-	err := uploadChannelSnapshot(channelId)
+	db, err := sql.Open("sqlite3", "database.db")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	fmt.Println("Channel snapshot uploaded successfully")
+	channelId := "UCYzV77unbAR8KiIoSm4zdUw"
+
+	createChannelFromId(db, channelId)
+
 }

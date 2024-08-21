@@ -1,3 +1,4 @@
 .env.local
 .vscode
 database.db
+.DS_Store
