@@ -31,3 +31,19 @@ video_snapshots
 - I assume snapshots are important? also wtf is `favoriteCount`
 
 ## stuff to do
+
+
+## all data
+
+### channels
+
+**snippet**
+- title
+- description
+- publishedAt
+- thumbnails
+- localized
+- country
+
+*statistics*
+  
