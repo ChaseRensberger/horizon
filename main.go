@@ -1,8 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -13,19 +13,20 @@ func init() {
 	}
 }
 
-func main() {
-	db, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	// channelId := "UCYzV77unbAR8KiIoSm4zdUw"
-	videoId := "3GAAIKDUMLg"
+func scrapeLukeJ() {
+	channelId := "UCYzV77unbAR8KiIoSm4zdUw"
+	getRSS(channelId)
+}
 
-	err = uploadVideoSnapshot(db, videoId)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+func main() {
+	happenEvery(time.Second*10, scrapeLukeJ)
+
+	// videoId := "3GAAIKDUMLg"
+
+	// err = uploadVideoSnapshot(db, videoId)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
 
 }
