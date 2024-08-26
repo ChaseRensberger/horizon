@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"net/http"
 
@@ -21,29 +20,33 @@ func init() {
 // }
 
 func main() {
-	db, err := sql.Open("sqlite3", "database.db")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
+	// db, err := sql.Open("sqlite3", "database.db")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
 
-	e.POST("/channel", func(c echo.Context) error {
-		channelId := c.FormValue("channelId")
-		err = createChannelFromId(db, channelId)
+		videoId := "ndAQfTzlVjc"
+		videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		return c.String(http.StatusOK, "Channel created")
+		return c.JSON(http.StatusOK, videoSnapshot)
 	})
+
+	// e.POST("/channel", func(c echo.Context) error {
+	// 	channelId := c.FormValue("channelId")
+	// 	err = createChannelFromId(db, channelId)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.String(http.StatusOK, "Channel created")
+	// })
 
 	e.Logger.Fatal(e.Start(":1323"))
 	// happenEvery(time.Second*10, scrapeLukeJ)
-
-	// videoId := "3GAAIKDUMLg"
 
 	// err = uploadVideoSnapshot(db, videoId)
 	// if err != nil {
