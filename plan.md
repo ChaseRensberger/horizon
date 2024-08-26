@@ -365,5 +365,4 @@ video_snapshots
 
 ## roadmap
 
-full channel response missing localizations
 playlists?
