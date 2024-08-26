@@ -365,4 +365,6 @@ video_snapshots
 
 ## roadmap
 
+check into channel.contentOwnerDetails and video.recordingDetails
+
 playlists?

@@ -19,6 +19,14 @@ func init() {
 // 	getRSS(channelId)
 // }
 
+// happenEvery(time.Second*10, scrapeLukeJ)
+
+// err = uploadVideoSnapshot(db, videoId)
+// if err != nil {
+// 	fmt.Println(err)
+// 	return
+// }
+
 func main() {
 	// db, err := sql.Open("sqlite3", "database.db")
 	// if err != nil {
@@ -27,31 +35,25 @@ func main() {
 	// }
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
+		return c.String(http.StatusOK, "Hello, World!")
+	})
 
-		videoId := "ndAQfTzlVjc"
+	e.GET("/channel", func(c echo.Context) error {
+		channelId := c.QueryParam("channelId")
+		channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(http.StatusOK, channelSnapshot)
+	})
+
+	e.GET("/video", func(c echo.Context) error {
+		videoId := c.QueryParam("videoId")
 		videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
 		return c.JSON(http.StatusOK, videoSnapshot)
 	})
-
-	// e.POST("/channel", func(c echo.Context) error {
-	// 	channelId := c.FormValue("channelId")
-	// 	err = createChannelFromId(db, channelId)
-	// 	if err != nil {
-	// 		return c.String(http.StatusInternalServerError, err.Error())
-	// 	}
-	// 	return c.String(http.StatusOK, "Channel created")
-	// })
-
 	e.Logger.Fatal(e.Start(":1323"))
-	// happenEvery(time.Second*10, scrapeLukeJ)
-
-	// err = uploadVideoSnapshot(db, videoId)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-
 }
