@@ -145,7 +145,7 @@ import (
 // 	return nil
 // }
 
-func getCurrentVideoSnapshot(videoId string) (*map[string]interface{}, error) {
+func getCurrentVideoSnapshot(videoId string) (*YoutubeVideoResponse, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	allParts := strings.Join(usedVideoParts, ",")
 	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, allParts, videoId)
@@ -170,7 +170,7 @@ func getCurrentVideoSnapshot(videoId string) (*map[string]interface{}, error) {
 		return nil, err
 	}
 
-	var videoResponse map[string]interface{}
+	var videoResponse YoutubeVideoResponse
 	if err := json.Unmarshal(responseJson, &videoResponse); err != nil {
 		return nil, err
 	}

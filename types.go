@@ -82,12 +82,8 @@ type YoutubeChannelResponse struct {
 }
 
 type YoutubeVideoResponse struct {
-	Kind     string `json:"kind"`
-	ETag     string `json:"etag"`
-	PageInfo struct {
-		ResultsPerPage int `json:"resultsPerPage"`
-		TotalResults   int `json:"totalResults"`
-	}
+	Kind  string `json:"kind"`
+	ETag  string `json:"etag"`
 	Items []struct {
 		Kind    string `json:"kind"`
 		ETag    string `json:"etag"`
@@ -156,58 +152,58 @@ type YoutubeVideoResponse struct {
 			RelevantTopicIds []string `json:"relevantTopicIds"`
 			TopicCategories  []string `json:"topicCategories"`
 		}
-		RecordingDetails struct {
-			RecordingDate string `json:"recordingDate"`
-		}
-		FileDetails struct {
-			FileName     string `json:"fileName"`
-			FileSize     int    `json:"fileSize"`
-			FileType     string `json:"fileType"`
-			Container    string `json:"container"`
-			VideoStreams []struct {
-				WidthPixels  int     `json:"widthPixels"`
-				HeightPixels int     `json:"heightPixels"`
-				FrameRateFps float64 `json:"frameRateFps"`
-				AspectRatio  float64 `json:"aspectRatio"`
-				Codec        string  `json:"codec"`
-				BitrateBps   string  `json:"bitrateBps"`
-				Rotation     string  `json:"rotation"`
-				Vendor       string  `json:"vendor"`
-			}
-			AudioStreams []struct {
-				ChannelCount int    `json:"channelCount"`
-				Codec        string `json:"codec"`
-				BitrateBps   string `json:"bitrateBps"`
-				Vendor       string `json:"vendor"`
-			}
-			DurationMs   string `json:"durationMs"`
-			BitrateBps   string `json:"bitrateBps"`
-			CreationTime string `json:"creationTime"`
-		}
-		ProcessingDetails struct {
-			ProcessingStatus   string `json:"processingStatus"`
-			ProcessingProgress struct {
-				PartsTotal     int    `json:"partsTotal"`
-				PartsProcessed int    `json:"partsProcessed"`
-				TimeLeftMs     string `json:"timeLeftMs"`
-			}
-			ProcessingFailureReason       string `json:"processingFailureReason"`
-			FileDetailsAvailability       string `json:"fileDetailsAvailability"`
-			ProcessingIssuesAvailability  string `json:"processingIssuesAvailability"`
-			TagSuggestionsAvailability    string `json:"tagSuggestionsAvailability"`
-			EditorSuggestionsAvailability string `json:"editorSuggestionsAvailability"`
-			ThumbnailsAvailability        string `json:"thumbnailsAvailability"`
-		}
-		Suggestions struct {
-			ProcessingErrors   []string `json:"processingErrors"`
-			ProcessingWarnings []string `json:"processingWarnings"`
-			ProcessingHints    []string `json:"processingHints"`
-			TagSuggestions     []struct {
-				Tag               string   `json:"tag"`
-				CategoryRestricts []string `json:"categoryRestricts"`
-			}
-			EditorSuggestions []string `json:"editorSuggestions"`
-		}
+		// RecordingDetails struct {
+		// 	RecordingDate string `json:"recordingDate"`
+		// }
+		// FileDetails struct {
+		// 	FileName     string `json:"fileName"`
+		// 	FileSize     int    `json:"fileSize"`
+		// 	FileType     string `json:"fileType"`
+		// 	Container    string `json:"container"`
+		// 	VideoStreams []struct {
+		// 		WidthPixels  int     `json:"widthPixels"`
+		// 		HeightPixels int     `json:"heightPixels"`
+		// 		FrameRateFps float64 `json:"frameRateFps"`
+		// 		AspectRatio  float64 `json:"aspectRatio"`
+		// 		Codec        string  `json:"codec"`
+		// 		BitrateBps   string  `json:"bitrateBps"`
+		// 		Rotation     string  `json:"rotation"`
+		// 		Vendor       string  `json:"vendor"`
+		// 	}
+		// 	AudioStreams []struct {
+		// 		ChannelCount int    `json:"channelCount"`
+		// 		Codec        string `json:"codec"`
+		// 		BitrateBps   string `json:"bitrateBps"`
+		// 		Vendor       string `json:"vendor"`
+		// 	}
+		// 	DurationMs   string `json:"durationMs"`
+		// 	BitrateBps   string `json:"bitrateBps"`
+		// 	CreationTime string `json:"creationTime"`
+		// }
+		// ProcessingDetails struct {
+		// 	ProcessingStatus   string `json:"processingStatus"`
+		// 	ProcessingProgress struct {
+		// 		PartsTotal     int    `json:"partsTotal"`
+		// 		PartsProcessed int    `json:"partsProcessed"`
+		// 		TimeLeftMs     string `json:"timeLeftMs"`
+		// 	}
+		// 	ProcessingFailureReason       string `json:"processingFailureReason"`
+		// 	FileDetailsAvailability       string `json:"fileDetailsAvailability"`
+		// 	ProcessingIssuesAvailability  string `json:"processingIssuesAvailability"`
+		// 	TagSuggestionsAvailability    string `json:"tagSuggestionsAvailability"`
+		// 	EditorSuggestionsAvailability string `json:"editorSuggestionsAvailability"`
+		// 	ThumbnailsAvailability        string `json:"thumbnailsAvailability"`
+		// }
+		// Suggestions struct {
+		// 	ProcessingErrors   []string `json:"processingErrors"`
+		// 	ProcessingWarnings []string `json:"processingWarnings"`
+		// 	ProcessingHints    []string `json:"processingHints"`
+		// 	TagSuggestions     []struct {
+		// 		Tag               string   `json:"tag"`
+		// 		CategoryRestricts []string `json:"categoryRestricts"`
+		// 	}
+		// 	EditorSuggestions []string `json:"editorSuggestions"`
+		// }
 		LiveStreamingDetails struct {
 			ActualStartTime    string `json:"actualStartTime"`
 			ActualEndTime      string `json:"actualEndTime"`

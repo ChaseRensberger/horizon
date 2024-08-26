@@ -28,7 +28,7 @@ video_snapshots
 ## resources
 
 (channel)[https://developers.google.com/youtube/v3/docs/channels]
-(video)[https://developers.google.com/youtube/v3/docs/channels]
+(video)[https://developers.google.com/youtube/v3/docs/videos]
 
 ## channel
 ```js
