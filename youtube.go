@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -164,17 +165,15 @@ func getCurrentVideoSnapshot(videoId string) (*map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to fetch video data: %d", resp.StatusCode)
 	}
 
-	var rawResponse map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&rawResponse); err != nil {
+	responseJson, err := io.ReadAll(resp.Body)
+	if err != nil {
 		return nil, err
 	}
 
-	return &rawResponse, nil
+	var videoResponse map[string]interface{}
+	if err := json.Unmarshal(responseJson, &videoResponse); err != nil {
+		return nil, err
+	}
 
-	// var videoResponse YoutubeVideoResponse
-	// if err := json.NewDecoder(resp.Body).Decode(&videoResponse); err != nil {
-	// 	return nil, err
-	// }
-
-	// return &videoResponse, nil
+	return &videoResponse, nil
 }
