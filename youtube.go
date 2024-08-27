@@ -1,13 +1,61 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func addTrackedChannel(channelId string, client *mongo.Client) (*TrackedChannel, error) {
+	channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+	if err != nil {
+		return nil, err
+	}
+
+	newTrackedChannel := TrackedChannel{
+		ChannelId:       channelSnapshot.Items[0].ID,
+		ChannelName:     channelSnapshot.Items[0].Snippet.Title,
+		ProfileImageURL: channelSnapshot.Items[0].Snippet.Thumbnails["default"].URL,
+	}
+
+	collection := client.Database("development").Collection("trackedChannels")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.InsertOne(ctx, newTrackedChannel)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Inserted new tracked channel with ID: %s", res.InsertedID)
+
+	return &newTrackedChannel, nil
+}
+
+func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
+	collection := client.Database("development").Collection("trackedChannels")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cursor, err := collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var trackedChannels []TrackedChannel
+	if err = cursor.All(ctx, &trackedChannels); err != nil {
+		return nil, err
+	}
+
+	return trackedChannels, nil
+}
 
 func getCurrentChannelSnapshot(channelId string) (*YoutubeChannelResponse, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")

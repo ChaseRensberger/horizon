@@ -5,6 +5,12 @@ package main
 var usedChannelParts = []string{"snippet", "contentDetails", "statistics", "topicDetails", "status", "brandingSettings", "localizations"}
 var usedVideoParts = []string{"snippet", "contentDetails", "status", "statistics", "player", "topicDetails", "liveStreamingDetails", "localizations"}
 
+type TrackedChannel struct {
+  ChannelId string
+  ChannelName string
+  ProfileImageURL string
+}
+
 type YoutubeChannelResponse struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
