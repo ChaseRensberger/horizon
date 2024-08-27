@@ -3,3 +3,9 @@ services:
     image: horizon
     ports:
       - 1323:1323
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data:/data

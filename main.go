@@ -3,15 +3,33 @@ package main
 import (
 	"fmt"
 	"net/http"
+  "context"
+  "time"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+  "go.mongodb.org/mongo-driver/mongo"
+  "go.mongodb.org/mongo-driver/mongo/options"
+  "go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-func init() {
+func init() (client *mongo.Client, err){
 	if err := godotenv.Load(".env.local"); err != nil {
-		fmt.Println("No .env.local file found")
+    return nil, err
 	}
+
+  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+  defer cancel()
+  client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+
+  defer func() {
+      if err = client.Disconnect(ctx); err != nil {
+          panic(err)
+      }
+  }()
+
+  return client, err
+
 }
 
 // func scrapeLukeJ() {
@@ -21,18 +39,14 @@ func init() {
 
 // happenEvery(time.Second*10, scrapeLukeJ)
 
-// err = uploadVideoSnapshot(db, videoId)
-// if err != nil {
-// 	fmt.Println(err)
-// 	return
-// }
-
 func main() {
-	// db, err := sql.Open("sqlite3", "database.db")
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
+  
+  client, err := init()
+  if err != nil {
+    // should I panic here?
+    panic(err)
+  }
+
 	e := echo.New()
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello, World!")
@@ -55,5 +69,6 @@ func main() {
 		}
 		return c.JSON(http.StatusOK, videoSnapshot)
 	})
+
 	e.Logger.Fatal(e.Start(":1323"))
 }
