@@ -4,7 +4,10 @@ services:
     ports:
       - 1324:1323
     environment:
-      - MONGODB_URI=mongodb://127.0.0.1:27017
+      - MONGODB_URI=
+      - YOUTUBE_API_URL=
+      - YOUTUBE_API_KEY=
+      - FALLBACK_YOUTUBE_API_URL=
   mongo:
     image: mongo:latest
     ports:
