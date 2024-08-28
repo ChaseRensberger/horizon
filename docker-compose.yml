@@ -1,11 +1,16 @@
 services:
   api:
-    image: horizon
+    image: chaserensberger/horizon:latest
     ports:
-      - 1323:1323
+      - 1324:1323
+    environment:
+      - MONGODB_URI=mongodb://localhost:27017
   mongo:
-    image: mongo
+    image: mongo:latest
     ports:
       - 27017:27017
     volumes:
-      - ./data:/data
+      - horizon-mongo:/data
+
+volumes:
+  horizon-mongo:
