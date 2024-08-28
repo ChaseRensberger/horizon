@@ -14,8 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func addTrackedChannel(channelId string, client *mongo.Client) (*TrackedChannel, error) {
-	channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+func addTrackedChannel(channelId string, client *mongo.Client, usingFallback bool) (*TrackedChannel, error) {
+	channelSnapshot, err := getCurrentChannelSnapshot(channelId, usingFallback)
 	if err != nil {
 		return nil, err
 	}
@@ -57,10 +57,13 @@ func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
 	return trackedChannels, nil
 }
 
-func getCurrentChannelSnapshot(channelId string) (*YoutubeChannelResponse, error) {
+func getCurrentChannelSnapshot(channelId string, usingFallback bool) (*YoutubeChannelResponse, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedChannelParts, ",")
 	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, requestedParts, channelId)
+	if !usingFallback {
+		requestUrl = requestUrl + "&key=" + os.Getenv("YOUTUBE_API_KEY")
+	}
 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
 	if err != nil {
 		return nil, err
@@ -90,10 +93,13 @@ func getCurrentChannelSnapshot(channelId string) (*YoutubeChannelResponse, error
 	return &channelResponse, nil
 }
 
-func getCurrentVideoSnapshot(videoId string) (*YoutubeVideoResponse, error) {
+func getCurrentVideoSnapshot(videoId string, usingFallback bool) (*YoutubeVideoResponse, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedVideoParts, ",")
 	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, requestedParts, videoId)
+	if !usingFallback {
+		requestUrl = requestUrl + "&key=" + os.Getenv("YOUTUBE_API_KEY")
+	}
 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
 	if err != nil {
 		return nil, err

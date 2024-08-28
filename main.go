@@ -19,6 +19,8 @@ import (
 
 // happenEvery(time.Second*10, scrapeLukeJ)
 
+var usingFallback = false
+
 func main() {
 
 	if err := godotenv.Load(".env.local"); err != nil {
@@ -42,7 +44,7 @@ func main() {
 
 	e.GET("/channel", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
-		channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+		channelSnapshot, err := getCurrentChannelSnapshot(channelId, usingFallback)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
@@ -51,7 +53,7 @@ func main() {
 
 	e.GET("/video", func(c echo.Context) error {
 		videoId := c.QueryParam("videoId")
-		videoSnapshot, err := getCurrentVideoSnapshot(videoId)
+		videoSnapshot, err := getCurrentVideoSnapshot(videoId, usingFallback)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
@@ -60,7 +62,7 @@ func main() {
 
 	e.POST("/tracked-channel", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
-		newTrackedChannel, err := addTrackedChannel(channelId, client)
+		newTrackedChannel, err := addTrackedChannel(channelId, client, usingFallback)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
