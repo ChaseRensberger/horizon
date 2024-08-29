@@ -15,6 +15,17 @@ import (
 )
 
 func addTrackedChannel(channelId string, client *mongo.Client, usingFallback bool) (*TrackedChannel, error) {
+  
+  trackedChannels, err := getAllTrackedChannels(client)
+  if err != nil {
+    return nil, err
+  }
+  for _, trackedChannel := range trackedChannels {
+    if trackedChannel.ChannelId == channelId {
+      return nil, fmt.Errorf("channel with ID %s is already being tracked", channelId)
+    }
+  }
+
 	channelSnapshot, err := getCurrentChannelSnapshot(channelId, usingFallback)
 	if err != nil {
 		return nil, err
