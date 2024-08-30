@@ -8,6 +8,8 @@ services:
       - YOUTUBE_API_URL=
       - YOUTUBE_API_KEY=
       - FALLBACK_YOUTUBE_API_URL=
+      - HORIZON_AUTH_KEY=
+      - PRIMARY_ALLOWED_ROUTE=
   mongo:
     image: mongo:latest
     ports:

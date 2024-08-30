@@ -38,37 +38,26 @@ func main() {
 		}
 	}()
 
+	HORIZON_AUTH_KEY := os.Getenv("HORIZON_AUTH_KEY")
+	ALLOWED_ROUTES := []string{os.Getenv("PRIMARY_ALLOWED_ROUTE")}
+
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},                                        // Allows all origins
-		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE}, // Specify allowed methods
+		AllowOrigins: ALLOWED_ROUTES,
+		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
 	}))
 
 	e.GET("/", func(c echo.Context) error {
-		return c.String(http.StatusOK, "Hello, World!")
-	})
-
-	e.GET("/channel", func(c echo.Context) error {
-		channelId := c.QueryParam("channelId")
-		channelSnapshot, err := getCurrentChannelSnapshot(channelId, usingFallback)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, channelSnapshot)
-	})
-
-	e.GET("/video", func(c echo.Context) error {
-		videoId := c.QueryParam("videoId")
-		videoSnapshot, err := getCurrentVideoSnapshot(videoId, usingFallback)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, videoSnapshot)
+		return c.String(http.StatusOK, "Horizon is up and running!")
 	})
 
 	e.POST("/tracked-channel", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
+		key := c.QueryParam("key")
+		if key != HORIZON_AUTH_KEY {
+			return c.String(http.StatusUnauthorized, "Unauthorized")
+		}
 		newTrackedChannel, err := addTrackedChannel(channelId, client, usingFallback)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
