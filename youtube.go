@@ -15,16 +15,16 @@ import (
 )
 
 func addTrackedChannel(channelId string, client *mongo.Client, usingFallback bool) (*TrackedChannel, error) {
-  
-  trackedChannels, err := getAllTrackedChannels(client)
-  if err != nil {
-    return nil, err
-  }
-  for _, trackedChannel := range trackedChannels {
-    if trackedChannel.ChannelId == channelId {
-      return nil, fmt.Errorf("channel with ID %s is already being tracked", channelId)
-    }
-  }
+
+	trackedChannels, err := getAllTrackedChannels(client)
+	if err != nil {
+		return nil, err
+	}
+	for _, trackedChannel := range trackedChannels {
+		if trackedChannel.ChannelId == channelId {
+			return nil, fmt.Errorf("channel with ID %s is already being tracked", channelId)
+		}
+	}
 
 	channelSnapshot, err := getCurrentChannelSnapshot(channelId, usingFallback)
 	if err != nil {
@@ -37,7 +37,7 @@ func addTrackedChannel(channelId string, client *mongo.Client, usingFallback boo
 		ProfileImageURL: channelSnapshot.Items[0].Snippet.Thumbnails["default"].URL,
 	}
 
-	collection := client.Database("development").Collection("trackedChannels")
+	collection := client.Database("horizon").Collection("trackedChannels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, newTrackedChannel)
@@ -51,7 +51,7 @@ func addTrackedChannel(channelId string, client *mongo.Client, usingFallback boo
 }
 
 func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
-	collection := client.Database("development").Collection("trackedChannels")
+	collection := client.Database("horizon").Collection("trackedChannels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, bson.D{})
