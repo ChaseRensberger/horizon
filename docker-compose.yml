@@ -15,7 +15,9 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - horizon-mongo:/data
+      - mongodb:/data/db
+      - mongoconfig:/data/configdb
 
 volumes:
-  horizon-mongo:
+  mongodb:
+  mongoconfig:
