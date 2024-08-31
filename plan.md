@@ -366,5 +366,14 @@ video_snapshots
 ## roadmap
 
 check into channel.contentOwnerDetails and video.recordingDetails
-
 playlists?
+
+## new plan
+
+1. loop through every tracked channel id and get a new snapshot every day (maybe small snapshot every day and full snapshot every month?)
+2. 
+
+
+
+
+

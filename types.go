@@ -229,3 +229,22 @@ type YoutubeVideoResponse struct {
 		}
 	}
 }
+
+type YoutubePlaylistItemResponse struct {
+	Kind  string `json:"kind"`
+	ETag  string `json:"etag"`
+  NextPageToken string `json:"nextPageToken"`
+  PageInfo struct {
+    TotalResults int `json:"totalResults"`
+    ResultsPerPage int `json:"resultsPerPage"`
+  }
+  Items []struct {
+    Kind string `json:"kind"`
+    ETag string `json:"etag"`
+    ID string `json:"id"`
+    ContentDetails struct {
+      VideoID string `json:"videoId"`
+      VideoPublishedAt string `json:"videoPublishedAt"`
+    }
+  }
+}
