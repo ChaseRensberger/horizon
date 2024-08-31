@@ -13,18 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-// func scrapeLukeJ() {
-// 	channelId := "UCYzV77unbAR8KiIoSm4zdUw"
-// 	getRSS(channelId)
-// }
-
-// happenEvery(time.Second*10, scrapeLukeJ)
-
 var usingFallback = false
 var mongoDatabase = ""
 
 func main() {
-
 	if err := godotenv.Load(".env.local"); err != nil {
 		panic(err)
 	}

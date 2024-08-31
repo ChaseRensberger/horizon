@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -124,6 +125,20 @@ func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient 
 	return nil
 }
 
+func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshot, mongoClient *mongo.Client) error {
+	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.InsertOne(ctx, videoSnapshot)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Inserted new video snapshot with ID: %s", res.InsertedID)
+
+	return nil
+}
+
 func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedChannelParts, ",")
@@ -195,11 +210,15 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 		return nil, err
 	}
 
+	videoSnapshot.RetrievedAt = time.Now()
+	videoSnapshot.IsShort = isShort(&videoSnapshot)
+
 	return &videoSnapshot, nil
 }
 
-func getRecentVideoIdsFromChannel(mongoClient *mongo.Client, channelId string, numVideos int) ([]string, error) {
+func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
+	// this may be a heuristic, but I assume it is always correct
 	playlistId := "UU" + channelId[2:]
 	requestUrl := fmt.Sprintf("%s/playlistItems?part=contentDetails&playlistId=%s&maxResults=%d&order=date", youtubeApiUrl, playlistId, numVideos)
 
@@ -240,4 +259,30 @@ func getRecentVideoIdsFromChannel(mongoClient *mongo.Client, channelId string, n
 
 func isShort(video *VideoSnapshot) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
+}
+
+func getRecentVideoIdsWithRSS(channelId string) {
+	url := fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", channelId)
+	resp, err := http.Get(url)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("failed to fetch rss feed")
+		return
+	}
+
+	var feed RSSVideoSnapshot
+	if err := xml.NewDecoder(resp.Body).Decode(&feed); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	for _, video := range feed.Videos {
+		fmt.Println(video.VideoId)
+	}
+
+	fmt.Println(resp)
 }
