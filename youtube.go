@@ -79,6 +79,16 @@ func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedCha
 
 	fmt.Printf("Inserted new tracked channel with ID: %s", res.InsertedID)
 
+	currentChannelSnapshot, err := getCurrentChannelSnapshot(channelId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = addChannelSnapshotToDatabase(currentChannelSnapshot, mongoClient)
+	if err != nil {
+		return nil, err
+	}
+
 	return &newTrackedChannel, nil
 }
 
@@ -98,6 +108,20 @@ func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
 	}
 
 	return trackedChannels, nil
+}
+
+func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient *mongo.Client) error {
+	collection := mongoClient.Database(mongoDatabase).Collection("channel_snapshots")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.InsertOne(ctx, channelSnapshot)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Inserted new channel snapshot with ID: %s", res.InsertedID)
+
+	return nil
 }
 
 func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
@@ -132,6 +156,8 @@ func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
 	if err := json.Unmarshal(responseJson, &channelSnapshot); err != nil {
 		return nil, err
 	}
+
+	channelSnapshot.RetrievedAt = time.Now()
 
 	return &channelSnapshot, nil
 }

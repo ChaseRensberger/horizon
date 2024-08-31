@@ -1,5 +1,9 @@
 package main
 
+import (
+	"time"
+)
+
 // var channelParts = []string{"snippet", "contentDetails", "statistics", "topicDetails", "status", "brandingSettings", "auditDetails", "contentOwnerDetails", "localizations"}
 // var videoParts = []string{"snippet", "contentDetails", "status", "statistics", "player", "topicDetails", "recordingDetails", "fileDetails", "processingDetails", "suggestions", "liveStreamingDetails", "localizations"}
 var usedChannelParts = []string{"snippet", "contentDetails", "statistics", "topicDetails", "status", "brandingSettings", "localizations"}
@@ -93,6 +97,8 @@ type ChannelSnapshot struct {
 			Description string `json:"description"`
 		}
 	}
+	// These are fields that won't come back from the youtube api but are important for our application
+	RetrievedAt time.Time `bson:"retrievedAt,omitempty"`
 }
 
 type VideoSnapshot struct {
@@ -231,6 +237,8 @@ type VideoSnapshot struct {
 			Description string `json:"description"`
 		}
 	}
+	// These are fields that won't come back from the youtube api but are important for our application
+	RetrievedAt time.Time `bson:"retrievedAt,omitempty"`
 }
 
 type PlaylistItemSnapshot struct {
@@ -250,4 +258,6 @@ type PlaylistItemSnapshot struct {
 			VideoPublishedAt string `json:"videoPublishedAt"`
 		}
 	}
+	// These are fields that won't come back from the youtube api but are important for our application
+	RetrievedAt time.Time `bson:"retrievedAt,omitempty"`
 }
