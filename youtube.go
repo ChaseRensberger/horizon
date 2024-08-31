@@ -140,61 +140,46 @@ func getCurrentVideoSnapshot(videoId string, usingFallback bool) (*YoutubeVideoR
 	return &videoResponse, nil
 }
 
-func getRecentVideosFromChannels(client *mongo.Client, numVideos int) ([]string, error) {
+func getRecentVideosFromChannel(client *mongo.Client, channelId string, numVideos int) ([]string, error) {
+  youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
+  playlistId := "UU" + trackedChannel.ChannelId[2:]
+  requestUrl := fmt.Sprintf("%s/playlistItems?part=contentDetails&playlistId=%s&maxResults=%d&order=date", youtubeApiUrl, playlistId, numVideos)
+  
+  req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+  if err != nil {
+    return nil, err
+  }
+  req.Header.Set("Accept", "application/json")
+  client := &http.Client{}
+  resp, err := client.Do(req)
+  if err != nil {
+    return nil, err
+  }
+  defer resp.Body.Close()
 
-	trackedChannels, err := getAllTrackedChannels(client)
-	if err != nil {
-		return nil, err
-	}
+  if resp.StatusCode != http.StatusOK {
+    return nil, fmt.Errorf("failed to fetch playlist data: %d", resp.StatusCode)
+  }
 
-	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
-	var videoIds []string
+  responseJson, err := io.ReadAll(resp.Body)
+  if err != nil {
+    return nil, err
+  }
 
-	for _, trackedChannel := range trackedChannels {
+  var playlistResponse YoutubePlaylistResponse
+  if err := json.Unmarshal(responseJson, &playlistResponse); err != nil {
+    return nil, err
+  }
 
-		playlistId := "UU" + trackedChannel.ChannelId[2:]
-		requestUrl := fmt.Sprintf("%s/playlistItems?part=contentDetails&playlistId=%s&maxResults=%d&order=date", youtubeApiUrl, playlistId, numVideos)
-		requestUrl = requestUrl + "&key=" + os.Getenv("YOUTUBE_API_KEY")
-		req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Accept", "application/json")
-		client := &http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
+  var videoIds []strings
 
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("failed to fetch video data: %d", resp.StatusCode)
-		}
+  for _, item := range playlistResponse.Items {
+    videoIds = append(videoIds, item.ContentDetails.VideoId)
+  }
 
-		responseJson, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		var videoResponse YoutubeVideoResponse
-		if err := json.Unmarshal(responseJson, &videoResponse); err != nil {
-			return nil, err
-		}
-
-		for _, item := range videoResponse.Items {
-			videoIds = append(videoIds, item.ID)
-		}
-	}
-
-	return videoIds, nil
+  return videoIds, nil
 }
 
 func isShort(video *YoutubeVideoResponse) bool {
-	return video.Items[0].ContentDetails.Duration <= "PT10M"
+  return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }
-
-//
-// func addVideoSnapshotsToDatabase(client *mongo.Client, []string) error {
-//
-//   getRecentVideosFromChannel(client, 10)
-// }
