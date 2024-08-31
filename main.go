@@ -20,8 +20,6 @@ import (
 
 // happenEvery(time.Second*10, scrapeLukeJ)
 
-var usingFallback = false
-
 func main() {
 
 	if err := godotenv.Load(".env.local"); err != nil {
@@ -30,7 +28,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
+	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 
 	defer func() {
 		if err = client.Disconnect(ctx); err != nil {
@@ -58,7 +56,7 @@ func main() {
 		if key != HORIZON_AUTH_KEY {
 			return c.String(http.StatusUnauthorized, "Unauthorized")
 		}
-		newTrackedChannel, err := addTrackedChannel(channelId, client, usingFallback)
+		newTrackedChannel, err := addTrackedChannel(channelId, mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
@@ -66,7 +64,7 @@ func main() {
 	})
 
 	e.GET("/tracked-channel", func(c echo.Context) error {
-		trackedChannels, err := getAllTrackedChannels(client)
+		trackedChannels, err := getAllTrackedChannels(mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}

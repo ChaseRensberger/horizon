@@ -14,30 +14,64 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func addTrackedChannel(channelId string, client *mongo.Client, usingFallback bool) (*TrackedChannel, error) {
+var usingFallback = false
 
-	trackedChannels, err := getAllTrackedChannels(client)
+func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
+	// trackedVideos, err := getAllTrackedVideos(client)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for _, trackedVideo := range trackedVideos {
+	// 	if trackedVideo.VideoId == videoId {
+	// 		return nil, fmt.Errorf("video with ID %s is already being tracked", videoId)
+	// 	}
+	// }
+	//
+	// videoSnapshot, err := getCurrentVideoSnapshot(videoId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	newTrackedVideo := TrackedVideo{
+		VideoId:   videoId,
+		ChannelId: channelId,
+	}
+
+	collection := mongoClient.Database("horizon").Collection("trackedVideos")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := collection.InsertOne(ctx, newTrackedVideo)
 	if err != nil {
 		return nil, err
 	}
-	for _, trackedChannel := range trackedChannels {
-		if trackedChannel.ChannelId == channelId {
-			return nil, fmt.Errorf("channel with ID %s is already being tracked", channelId)
-		}
-	}
 
-	channelSnapshot, err := getCurrentChannelSnapshot(channelId, usingFallback)
-	if err != nil {
-		return nil, err
-	}
+	fmt.Printf("Inserted new tracked video with ID: %s", res.InsertedID)
+
+	return &newTrackedVideo, nil
+}
+
+func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedChannel, error) {
+
+	// trackedChannels, err := getAllTrackedChannels(client)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// for _, trackedChannel := range trackedChannels {
+	// 	if trackedChannel.ChannelId == channelId {
+	// 		return nil, fmt.Errorf("channel with ID %s is already being tracked", channelId)
+	// 	}
+	// }
+	//
+	// channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	newTrackedChannel := TrackedChannel{
-		ChannelId:       channelSnapshot.Items[0].ID,
-		ChannelName:     channelSnapshot.Items[0].Snippet.Title,
-		ProfileImageURL: channelSnapshot.Items[0].Snippet.Thumbnails["default"].URL,
+		ChannelId: channelId,
 	}
 
-	collection := client.Database("horizon").Collection("trackedChannels")
+	collection := mongoClient.Database("horizon").Collection("trackedChannels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, newTrackedChannel)
@@ -68,7 +102,7 @@ func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
 	return trackedChannels, nil
 }
 
-func getCurrentChannelSnapshot(channelId string, usingFallback bool) (*YoutubeChannelResponse, error) {
+func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedChannelParts, ",")
 	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, requestedParts, channelId)
@@ -80,8 +114,8 @@ func getCurrentChannelSnapshot(channelId string, usingFallback bool) (*YoutubeCh
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -96,15 +130,15 @@ func getCurrentChannelSnapshot(channelId string, usingFallback bool) (*YoutubeCh
 		return nil, err
 	}
 
-	var channelResponse YoutubeChannelResponse
+	var channelSnapshot ChannelSnapshot
 	if err := json.Unmarshal(responseJson, &channelResponse); err != nil {
 		return nil, err
 	}
 
-	return &channelResponse, nil
+	return &channelSnapshot, nil
 }
 
-func getCurrentVideoSnapshot(videoId string, usingFallback bool) (*YoutubeVideoResponse, error) {
+func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedVideoParts, ",")
 	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, requestedParts, videoId)
@@ -116,8 +150,8 @@ func getCurrentVideoSnapshot(videoId string, usingFallback bool) (*YoutubeVideoR
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -132,54 +166,54 @@ func getCurrentVideoSnapshot(videoId string, usingFallback bool) (*YoutubeVideoR
 		return nil, err
 	}
 
-	var videoResponse YoutubeVideoResponse
-	if err := json.Unmarshal(responseJson, &videoResponse); err != nil {
+	var videoSnapshot VideoSnapshot
+	if err := json.Unmarshal(responseJson, &videoSnapshot); err != nil {
 		return nil, err
 	}
 
-	return &videoResponse, nil
+	return &videoSnapshot, nil
 }
 
-func getRecentVideosFromChannel(client *mongo.Client, channelId string, numVideos int) ([]string, error) {
-  youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
-  playlistId := "UU" + trackedChannel.ChannelId[2:]
-  requestUrl := fmt.Sprintf("%s/playlistItems?part=contentDetails&playlistId=%s&maxResults=%d&order=date", youtubeApiUrl, playlistId, numVideos)
-  
-  req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
-  if err != nil {
-    return nil, err
-  }
-  req.Header.Set("Accept", "application/json")
-  client := &http.Client{}
-  resp, err := client.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer resp.Body.Close()
+func getRecentVideoIdsFromChannel(mongoClient *mongo.Client, channelId string, numVideos int) ([]string, error) {
+	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
+	playlistId := "UU" + channelId[2:]
+	requestUrl := fmt.Sprintf("%s/playlistItems?part=contentDetails&playlistId=%s&maxResults=%d&order=date", youtubeApiUrl, playlistId, numVideos)
 
-  if resp.StatusCode != http.StatusOK {
-    return nil, fmt.Errorf("failed to fetch playlist data: %d", resp.StatusCode)
-  }
+	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Accept", "application/json")
+	httpClient := &http.Client{}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
 
-  responseJson, err := io.ReadAll(resp.Body)
-  if err != nil {
-    return nil, err
-  }
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to fetch playlist data: %d", resp.StatusCode)
+	}
 
-  var playlistResponse YoutubePlaylistResponse
-  if err := json.Unmarshal(responseJson, &playlistResponse); err != nil {
-    return nil, err
-  }
+	responseJson, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
 
-  var videoIds []strings
+	var playlistItemSnapshot PlaylistItemSnapshot
+	if err := json.Unmarshal(responseJson, &playlistItemSnapshot); err != nil {
+		return nil, err
+	}
 
-  for _, item := range playlistResponse.Items {
-    videoIds = append(videoIds, item.ContentDetails.VideoId)
-  }
+	var videoIds []strings
 
-  return videoIds, nil
+	for _, item := range playlistItemSnapshot.Items {
+		videoIds = append(videoIds, item.ContentDetails.VideoId)
+	}
+
+	return videoIds, nil
 }
 
 func isShort(video *YoutubeVideoResponse) bool {
-  return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
+	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }

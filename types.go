@@ -6,12 +6,15 @@ var usedChannelParts = []string{"snippet", "contentDetails", "statistics", "topi
 var usedVideoParts = []string{"snippet", "contentDetails", "status", "statistics", "player", "topicDetails", "liveStreamingDetails", "localizations"}
 
 type TrackedChannel struct {
-  ChannelId string
-  ChannelName string
-  ProfileImageURL string
+  ChannelId string `bson:"_id,omitempty"`
 }
 
-type YoutubeChannelResponse struct {
+type TrackedVideo struct {
+  VideoId string `bson:"_id,omitempty"`
+  ChannelId string `bson:"channelId,omitempty"`
+}
+
+type ChannelSnapshot struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
 	Items []struct {
@@ -92,7 +95,7 @@ type YoutubeChannelResponse struct {
 	}
 }
 
-type YoutubeVideoResponse struct {
+type VideoSnapshot struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
 	Items []struct {
@@ -230,7 +233,7 @@ type YoutubeVideoResponse struct {
 	}
 }
 
-type YoutubePlaylistItemResponse struct {
+type PlaylistItemSnapshot struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
   NextPageToken string `json:"nextPageToken"`
