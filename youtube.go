@@ -131,7 +131,7 @@ func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
 	}
 
 	var channelSnapshot ChannelSnapshot
-	if err := json.Unmarshal(responseJson, &channelResponse); err != nil {
+	if err := json.Unmarshal(responseJson, &channelSnapshot); err != nil {
 		return nil, err
 	}
 
@@ -205,15 +205,15 @@ func getRecentVideoIdsFromChannel(mongoClient *mongo.Client, channelId string, n
 		return nil, err
 	}
 
-	var videoIds []strings
+	var videoIds []string
 
 	for _, item := range playlistItemSnapshot.Items {
-		videoIds = append(videoIds, item.ContentDetails.VideoId)
+		videoIds = append(videoIds, item.ContentDetails.VideoID)
 	}
 
 	return videoIds, nil
 }
 
-func isShort(video *YoutubeVideoResponse) bool {
+func isShort(video *VideoSnapshot) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }

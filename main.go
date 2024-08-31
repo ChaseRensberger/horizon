@@ -31,7 +31,7 @@ func main() {
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
 
 	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
+		if err = mongoClient.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
