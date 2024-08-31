@@ -20,6 +20,9 @@ import (
 
 // happenEvery(time.Second*10, scrapeLukeJ)
 
+var usingFallback = false
+var mongoDatabase = ""
+
 func main() {
 
 	if err := godotenv.Load(".env.local"); err != nil {
@@ -29,6 +32,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
+
+	mongoDatabase = os.Getenv("MONGO_DATABASE")
 
 	defer func() {
 		if err = mongoClient.Disconnect(ctx); err != nil {

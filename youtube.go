@@ -14,8 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var usingFallback = false
-
 func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
 	// trackedVideos, err := getAllTrackedVideos(client)
 	// if err != nil {
@@ -37,7 +35,7 @@ func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client
 		ChannelId: channelId,
 	}
 
-	collection := mongoClient.Database("horizon").Collection("trackedVideos")
+	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, newTrackedVideo)
@@ -71,7 +69,7 @@ func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedCha
 		ChannelId: channelId,
 	}
 
-	collection := mongoClient.Database("horizon").Collection("trackedChannels")
+	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, newTrackedChannel)
@@ -85,7 +83,7 @@ func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedCha
 }
 
 func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
-	collection := client.Database("horizon").Collection("trackedChannels")
+	collection := client.Database(mongoDatabase).Collection("tracked_channels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, bson.D{})

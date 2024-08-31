@@ -6,12 +6,12 @@ var usedChannelParts = []string{"snippet", "contentDetails", "statistics", "topi
 var usedVideoParts = []string{"snippet", "contentDetails", "status", "statistics", "player", "topicDetails", "liveStreamingDetails", "localizations"}
 
 type TrackedChannel struct {
-  ChannelId string `bson:"_id,omitempty"`
+	ChannelId string `bson:"_id,omitempty"`
 }
 
 type TrackedVideo struct {
-  VideoId string `bson:"_id,omitempty"`
-  ChannelId string `bson:"channelId,omitempty"`
+	VideoId   string `bson:"_id,omitempty"`
+	ChannelId string `bson:"channelId,omitempty"`
 }
 
 type ChannelSnapshot struct {
@@ -234,20 +234,20 @@ type VideoSnapshot struct {
 }
 
 type PlaylistItemSnapshot struct {
-	Kind  string `json:"kind"`
-	ETag  string `json:"etag"`
-  NextPageToken string `json:"nextPageToken"`
-  PageInfo struct {
-    TotalResults int `json:"totalResults"`
-    ResultsPerPage int `json:"resultsPerPage"`
-  }
-  Items []struct {
-    Kind string `json:"kind"`
-    ETag string `json:"etag"`
-    ID string `json:"id"`
-    ContentDetails struct {
-      VideoID string `json:"videoId"`
-      VideoPublishedAt string `json:"videoPublishedAt"`
-    }
-  }
+	Kind          string `json:"kind"`
+	ETag          string `json:"etag"`
+	NextPageToken string `json:"nextPageToken"`
+	PageInfo      struct {
+		TotalResults   int `json:"totalResults"`
+		ResultsPerPage int `json:"resultsPerPage"`
+	}
+	Items []struct {
+		Kind           string `json:"kind"`
+		ETag           string `json:"etag"`
+		ID             string `json:"id"`
+		ContentDetails struct {
+			VideoID          string `json:"videoId"`
+			VideoPublishedAt string `json:"videoPublishedAt"`
+		}
+	}
 }
