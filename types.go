@@ -10,12 +10,14 @@ var usedChannelParts = []string{"snippet", "contentDetails", "statistics", "topi
 var usedVideoParts = []string{"snippet", "contentDetails", "status", "statistics", "player", "topicDetails", "liveStreamingDetails", "localizations"}
 
 type TrackedChannel struct {
-	ChannelId string `bson:"_id,omitempty"`
+	ChannelId   string `bson:"_id,omitempty"`
+	ChannelName string `bson:"channelName,omitempty"`
 }
 
 type TrackedVideo struct {
-	VideoId string `bson:"_id,omitempty"`
-	// ChannelId string `bson:"channelId,omitempty"`
+	VideoId   string `bson:"_id,omitempty"`
+	ChannelId string `bson:"channelId,omitempty"`
+	// maybe include video name at some point
 }
 
 type ChannelSnapshot struct {
@@ -264,7 +266,8 @@ type PlaylistItemSnapshot struct {
 }
 
 type RSSVideoSnapshot struct {
-	Channel     string `xml:"title"`
+	ChannelName string `xml:"title"`
+	ChannelId   string `xml:"yt:channelId"`
 	ChannelLink struct {
 		Href string `xml:"href,attr"`
 	} `xml:"link"`
@@ -290,4 +293,11 @@ type RSSVideoSnapshot struct {
 			} `xml:"http://search.yahoo.com/mrss/ community"`
 		} `xml:"http://search.yahoo.com/mrss/ group"`
 	} `xml:"entry"`
+}
+
+// TODO: figure out a way to remove this type
+type VideoIdWithChannel struct {
+	VideoId     string
+	ChannelId   string
+	ChannelName string
 }

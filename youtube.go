@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func addTrackedVideo(videoId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
+func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
 	// trackedVideos, err := getAllTrackedVideos(client)
 	// if err != nil {
 	// 	return nil, err
@@ -32,8 +32,8 @@ func addTrackedVideo(videoId string, mongoClient *mongo.Client) (*TrackedVideo, 
 	// }
 
 	newTrackedVideo := TrackedVideo{
-		VideoId: videoId,
-		// ChannelId: channelId,
+		VideoId:   videoId,
+		ChannelId: channelId,
 	}
 
 	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
@@ -51,23 +51,14 @@ func addTrackedVideo(videoId string, mongoClient *mongo.Client) (*TrackedVideo, 
 
 func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedChannel, error) {
 
-	// trackedChannels, err := getAllTrackedChannels(client)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// for _, trackedChannel := range trackedChannels {
-	// 	if trackedChannel.ChannelId == channelId {
-	// 		return nil, fmt.Errorf("channel with ID %s is already being tracked", channelId)
-	// 	}
-	// }
-	//
-	// channelSnapshot, err := getCurrentChannelSnapshot(channelId)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+	if err != nil {
+		return nil, err
+	}
 
 	newTrackedChannel := TrackedChannel{
-		ChannelId: channelId,
+		ChannelId:   channelId,
+		ChannelName: channelSnapshot.Items[0].Snippet.Title,
 	}
 
 	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
@@ -230,6 +221,7 @@ func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.
 	return videoSnapshot, nil
 }
 
+// unused for the time being but a function like this may be useful in the future
 func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	// this may be a heuristic, but I assume it is always correct
@@ -275,7 +267,7 @@ func isShort(video *VideoSnapshot) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }
 
-func getRecentVideoIdsWithRSS(channelId string) ([]string, error) {
+func getRecentVideoIdsWithRSS(channelId string) ([]VideoIdWithChannel, error) {
 	url := fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", channelId)
 	resp, err := http.Get(url)
 	if err != nil {
@@ -294,12 +286,13 @@ func getRecentVideoIdsWithRSS(channelId string) ([]string, error) {
 		return nil, err
 	}
 
-	var videoIds []string
+	var recentVideoIdsWithChannel []VideoIdWithChannel
+	channelName := feed.ChannelName
 	for _, video := range feed.Videos {
-		videoIds = append(videoIds, video.VideoId)
+		recentVideoIdsWithChannel = append(recentVideoIdsWithChannel, VideoIdWithChannel{VideoId: video.VideoId, ChannelId: channelId, ChannelName: channelName})
 	}
 
-	return videoIds, nil
+	return recentVideoIdsWithChannel, nil
 }
 
 func uploadTrigger(mongoClient *mongo.Client) error {
@@ -309,16 +302,16 @@ func uploadTrigger(mongoClient *mongo.Client) error {
 	}
 
 	for _, trackedChannel := range trackedChannels {
-		recentVideoIds, err := getRecentVideoIdsWithRSS(trackedChannel.ChannelId)
+		recentVideoIdsWithChannel, err := getRecentVideoIdsWithRSS(trackedChannel.ChannelId)
 		if err != nil {
 			return err
 		}
-		for _, videoId := range recentVideoIds {
+		for _, videoIdWithChannel := range recentVideoIdsWithChannel {
 			// insert won't succeed most of the time
-			_, err := addTrackedVideo(videoId, mongoClient)
+			_, err := addTrackedVideo(videoIdWithChannel.VideoId, videoIdWithChannel.ChannelId, mongoClient)
 			if err == nil {
-				fmt.Printf("Inserted new tracked video with ID: %s", videoId)
-				_, err = getCurrentVideoSnapshotAndAddToDatabase(videoId, mongoClient)
+				fmt.Printf("Inserted new tracked video with ID: %s", videoIdWithChannel.VideoId)
+				_, err = getCurrentVideoSnapshotAndAddToDatabase(videoIdWithChannel.VideoId, mongoClient)
 				if err != nil {
 					return err
 				}

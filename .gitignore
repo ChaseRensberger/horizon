@@ -1,7 +1,6 @@
-.env.local
+.env.*
 .vscode
 database.db
 .DS_Store
 /examples
 /data
-/scripts
