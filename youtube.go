@@ -15,7 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
+func addTrackedVideo(videoId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
 	// trackedVideos, err := getAllTrackedVideos(client)
 	// if err != nil {
 	// 	return nil, err
@@ -32,8 +32,8 @@ func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client
 	// }
 
 	newTrackedVideo := TrackedVideo{
-		VideoId:   videoId,
-		ChannelId: channelId,
+		VideoId: videoId,
+		// ChannelId: channelId,
 	}
 
 	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
@@ -93,8 +93,8 @@ func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedCha
 	return &newTrackedChannel, nil
 }
 
-func getAllTrackedChannels(client *mongo.Client) ([]TrackedChannel, error) {
-	collection := client.Database(mongoDatabase).Collection("tracked_channels")
+func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) {
+	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, bson.D{})
@@ -216,6 +216,20 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 	return &videoSnapshot, nil
 }
 
+func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*VideoSnapshot, error) {
+	videoSnapshot, err := getCurrentVideoSnapshot(videoId)
+	if err != nil {
+		return nil, err
+	}
+
+	err = addVideoSnapshotToDatabase(videoSnapshot, mongoClient)
+	if err != nil {
+		return nil, err
+	}
+
+	return videoSnapshot, nil
+}
+
 func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	// this may be a heuristic, but I assume it is always correct
@@ -261,28 +275,55 @@ func isShort(video *VideoSnapshot) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }
 
-func getRecentVideoIdsWithRSS(channelId string) {
+func getRecentVideoIdsWithRSS(channelId string) ([]string, error) {
 	url := fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", channelId)
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("failed to fetch rss feed")
-		return
+		return nil, fmt.Errorf("failed to fetch rss feed: %d", resp.StatusCode)
 	}
 
 	var feed RSSVideoSnapshot
 	if err := xml.NewDecoder(resp.Body).Decode(&feed); err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 
+	var videoIds []string
 	for _, video := range feed.Videos {
-		fmt.Println(video.VideoId)
+		videoIds = append(videoIds, video.VideoId)
 	}
 
-	fmt.Println(resp)
+	return videoIds, nil
+}
+
+func uploadTrigger(mongoClient *mongo.Client) error {
+	trackedChannels, err := getAllTrackedChannels(mongoClient)
+	if err != nil {
+		return err
+	}
+
+	for _, trackedChannel := range trackedChannels {
+		recentVideoIds, err := getRecentVideoIdsWithRSS(trackedChannel.ChannelId)
+		if err != nil {
+			return err
+		}
+		for _, videoId := range recentVideoIds {
+			// insert won't succeed most of the time
+			_, err := addTrackedVideo(videoId, mongoClient)
+			if err == nil {
+				fmt.Printf("Inserted new tracked video with ID: %s", videoId)
+				_, err = getCurrentVideoSnapshotAndAddToDatabase(videoId, mongoClient)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }

@@ -68,5 +68,17 @@ func main() {
 		return c.JSON(http.StatusOK, trackedChannels)
 	})
 
+	e.POST("/upload-trigger", func(c echo.Context) error {
+		key := c.QueryParam("key")
+		if key != HORIZON_AUTH_KEY {
+			return c.String(http.StatusUnauthorized, "Unauthorized")
+		}
+		err := uploadTrigger(mongoClient)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.String(http.StatusOK, "Upload trigger successful")
+	})
+
 	e.Logger.Fatal(e.Start(":1323"))
 }

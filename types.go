@@ -14,8 +14,8 @@ type TrackedChannel struct {
 }
 
 type TrackedVideo struct {
-	VideoId   string `bson:"_id,omitempty"`
-	ChannelId string `bson:"channelId,omitempty"`
+	VideoId string `bson:"_id,omitempty"`
+	// ChannelId string `bson:"channelId,omitempty"`
 }
 
 type ChannelSnapshot struct {
