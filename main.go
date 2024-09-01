@@ -79,12 +79,24 @@ func main() {
 		return c.String(http.StatusOK, "Upload trigger successful")
 	})
 
-	e.POST("/update-trigger", func(c echo.Context) error {
+	e.POST("/video-update-trigger", func(c echo.Context) error {
 		key := c.QueryParam("key")
 		if key != HORIZON_AUTH_KEY {
 			return c.String(http.StatusUnauthorized, "Unauthorized")
 		}
-		err := updateTrigger(mongoClient)
+		err := videoUpdateTrigger(mongoClient)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.String(http.StatusOK, "Update trigger successful")
+	})
+
+	e.POST("channel-update-trigger", func(c echo.Context) error {
+		key := c.QueryParam("key")
+		if key != HORIZON_AUTH_KEY {
+			return c.String(http.StatusUnauthorized, "Unauthorized")
+		}
+		err := channelUpdateTrigger(mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}

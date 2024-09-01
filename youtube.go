@@ -339,7 +339,7 @@ func uploadTrigger(mongoClient *mongo.Client) error {
 	return nil
 }
 
-func updateTrigger(mongoClient *mongo.Client) error {
+func videoUpdateTrigger(mongoClient *mongo.Client) error {
 	trackedVideos, err := getAllTrackedVideos(mongoClient)
 	if err != nil {
 		return err
@@ -352,6 +352,27 @@ func updateTrigger(mongoClient *mongo.Client) error {
 		}
 
 		err = addVideoSnapshotToDatabase(videoSnapshot, mongoClient)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func channelUpdateTrigger(mongoClient *mongo.Client) error {
+	trackedChannels, err := getAllTrackedChannels(mongoClient)
+	if err != nil {
+		return err
+	}
+
+	for _, trackedChannel := range trackedChannels {
+		channelSnapshot, err := getCurrentChannelSnapshot(trackedChannel.ChannelId)
+		if err != nil {
+			return err
+		}
+
+		err = addChannelSnapshotToDatabase(channelSnapshot, mongoClient)
 		if err != nil {
 			return err
 		}
