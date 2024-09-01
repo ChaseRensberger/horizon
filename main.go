@@ -24,7 +24,6 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
-
 	mongoDatabase = os.Getenv("MONGO_DATABASE")
 
 	defer func() {
@@ -78,6 +77,18 @@ func main() {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
 		return c.String(http.StatusOK, "Upload trigger successful")
+	})
+
+	e.POST("/update-trigger", func(c echo.Context) error {
+		key := c.QueryParam("key")
+		if key != HORIZON_AUTH_KEY {
+			return c.String(http.StatusUnauthorized, "Unauthorized")
+		}
+		err := updateTrigger(mongoClient)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.String(http.StatusOK, "Update trigger successful")
 	})
 
 	e.Logger.Fatal(e.Start(":1323"))

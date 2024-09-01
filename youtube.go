@@ -102,6 +102,24 @@ func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) 
 	return trackedChannels, nil
 }
 
+func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
+	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cursor, err := collection.Find(ctx, bson.D{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var trackedVideos []TrackedVideo
+	if err = cursor.All(ctx, &trackedVideos); err != nil {
+		return nil, err
+	}
+
+	return trackedVideos, nil
+}
+
 func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient *mongo.Client) error {
 	collection := mongoClient.Database(mongoDatabase).Collection("channel_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -318,5 +336,26 @@ func uploadTrigger(mongoClient *mongo.Client) error {
 			}
 		}
 	}
+	return nil
+}
+
+func updateTrigger(mongoClient *mongo.Client) error {
+	trackedVideos, err := getAllTrackedVideos(mongoClient)
+	if err != nil {
+		return err
+	}
+
+	for _, trackedVideo := range trackedVideos {
+		videoSnapshot, err := getCurrentVideoSnapshot(trackedVideo.VideoId)
+		if err != nil {
+			return err
+		}
+
+		err = addVideoSnapshotToDatabase(videoSnapshot, mongoClient)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
