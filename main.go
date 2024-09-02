@@ -67,6 +67,19 @@ func main() {
 		return c.JSON(http.StatusOK, trackedChannels)
 	})
 
+	e.GET("/video-snapshots", func(c echo.Context) error {
+		channelId := c.QueryParam("channelId")
+		videoSnapshots, err := getMostRecentVideoSnapshotsByChannelId(channelId, mongoClient)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(http.StatusOK, videoSnapshots)
+	})
+
+	// e.GET("/tracked-vi-byid", func(c echo.Context) error {
+	// 	channelId := c.QueryParam("channelId")
+	// 	trackedChannel, err := getTrackedChannelById(channelId, mongoClient)
+
 	e.POST("/upload-trigger", func(c echo.Context) error {
 		key := c.QueryParam("key")
 		if key != HORIZON_AUTH_KEY {

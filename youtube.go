@@ -102,6 +102,32 @@ func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) 
 	return trackedChannels, nil
 }
 
+func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]VideoSnapshot, error) {
+	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// TODO: complete pipeline
+	pipeline := mongo.Pipeline{
+		bson.D{{Key: "$match", Value: bson.D{{Key: "items.0.snippet.channelId", Value: channelId}}}},
+		bson.D{{Key: "$sort", Value: bson.D{{Key: "retrievedAt", Value: -1}}}},
+		bson.D{{Key: "$group", Value: bson.D{{Key: "_id", Value: "$items.0.snippet.resourceId.videoId"}, {Key: "latestSnapshot", Value: bson.D{{Key: "$first", Value: "$$ROOT"}}}}}},
+	}
+
+	cursor, err := collection.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var videoSnapshots []VideoSnapshot
+	if err = cursor.All(ctx, &videoSnapshots); err != nil {
+		return nil, err
+	}
+
+	return videoSnapshots, nil
+}
+
 func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
 	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
