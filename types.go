@@ -20,7 +20,7 @@ type TrackedVideo struct {
 	// maybe include video name at some point
 }
 
-type ChannelSnapshot struct {
+type ChannelSnapshotResponse struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
 	Items []struct {
@@ -103,7 +103,7 @@ type ChannelSnapshot struct {
 	RetrievedAt time.Time `bson:"retrievedAt,omitempty"`
 }
 
-type VideoSnapshot struct {
+type VideoSnapshotResponse struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
 	Items []struct {

@@ -49,69 +49,16 @@ func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client
 	return &newTrackedVideo, nil
 }
 
-func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedChannel, error) {
-
-	channelSnapshot, err := getCurrentChannelSnapshot(channelId)
-	if err != nil {
-		return nil, err
-	}
-
-	newTrackedChannel := TrackedChannel{
-		ChannelId:   channelId,
-		ChannelName: channelSnapshot.Items[0].Snippet.Title,
-	}
-
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	res, err := collection.InsertOne(ctx, newTrackedChannel)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("Inserted new tracked channel with ID: %s", res.InsertedID)
-
-	currentChannelSnapshot, err := getCurrentChannelSnapshot(channelId)
-	if err != nil {
-		return nil, err
-	}
-
-	err = addChannelSnapshotToDatabase(currentChannelSnapshot, mongoClient)
-	if err != nil {
-		return nil, err
-	}
-
-	return &newTrackedChannel, nil
-}
-
-func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) {
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	cursor, err := collection.Find(ctx, bson.D{})
-	if err != nil {
-		return nil, err
-	}
-	defer cursor.Close(ctx)
-
-	var trackedChannels []TrackedChannel
-	if err = cursor.All(ctx, &trackedChannels); err != nil {
-		return nil, err
-	}
-
-	return trackedChannels, nil
-}
-
-func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]VideoSnapshot, error) {
+func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]VideoSnapshotResponse, error) {
 	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	// TODO: complete pipeline
 	pipeline := mongo.Pipeline{
-		bson.D{{Key: "$match", Value: bson.D{{Key: "items.0.snippet.channelId", Value: channelId}}}},
-		bson.D{{Key: "$sort", Value: bson.D{{Key: "retrievedAt", Value: -1}}}},
-		bson.D{{Key: "$group", Value: bson.D{{Key: "_id", Value: "$items.0.snippet.resourceId.videoId"}, {Key: "latestSnapshot", Value: bson.D{{Key: "$first", Value: "$$ROOT"}}}}}},
+		bson.D{{Key: "$match", Value: bson.D{{Key: "Items[0].Snippet.channelId", Value: channelId}}}},
+		// bson.D{{Key: "$sort", Value: bson.D{{Key: "retrievedAt", Value: -1}}}},
+		// bson.D{{Key: "$group", Value: bson.D{{Key: "_id", Value: "$items.snippet.resourceId.videoId"}, {Key: "latestSnapshot", Value: bson.D{{Key: "$first", Value: "$$ROOT"}}}}}},
 	}
 
 	cursor, err := collection.Aggregate(ctx, pipeline)
@@ -120,7 +67,7 @@ func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo
 	}
 	defer cursor.Close(ctx)
 
-	var videoSnapshots []VideoSnapshot
+	var videoSnapshots []VideoSnapshotResponse
 	if err = cursor.All(ctx, &videoSnapshots); err != nil {
 		return nil, err
 	}
@@ -146,21 +93,7 @@ func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
 	return trackedVideos, nil
 }
 
-func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient *mongo.Client) error {
-	collection := mongoClient.Database(mongoDatabase).Collection("channel_snapshots")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	res, err := collection.InsertOne(ctx, channelSnapshot)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("Inserted new channel snapshot with ID: %s", res.InsertedID)
-
-	return nil
-}
-
-func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshot, mongoClient *mongo.Client) error {
+func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshotResponse, mongoClient *mongo.Client) error {
 	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -174,45 +107,7 @@ func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshot, mongoClient *mongo
 	return nil
 }
 
-func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
-	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
-	requestedParts := strings.Join(usedChannelParts, ",")
-	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, requestedParts, channelId)
-	if !usingFallback {
-		requestUrl = requestUrl + "&key=" + os.Getenv("YOUTUBE_API_KEY")
-	}
-	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-	req.Header.Set("Accept", "application/json")
-	httpClient := &http.Client{}
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch channel data: %d", resp.StatusCode)
-	}
-
-	responseJson, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var channelSnapshot ChannelSnapshot
-	if err := json.Unmarshal(responseJson, &channelSnapshot); err != nil {
-		return nil, err
-	}
-
-	channelSnapshot.RetrievedAt = time.Now()
-
-	return &channelSnapshot, nil
-}
-
-func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
+func getCurrentVideoSnapshot(videoId string) (*VideoSnapshotResponse, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedVideoParts, ",")
 	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, requestedParts, videoId)
@@ -240,7 +135,7 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 		return nil, err
 	}
 
-	var videoSnapshot VideoSnapshot
+	var videoSnapshot VideoSnapshotResponse
 	if err := json.Unmarshal(responseJson, &videoSnapshot); err != nil {
 		return nil, err
 	}
@@ -251,7 +146,7 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 	return &videoSnapshot, nil
 }
 
-func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*VideoSnapshot, error) {
+func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*VideoSnapshotResponse, error) {
 	videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 	if err != nil {
 		return nil, err
@@ -307,7 +202,7 @@ func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, er
 	return videoIds, nil
 }
 
-func isShort(video *VideoSnapshot) bool {
+func isShort(video *VideoSnapshotResponse) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }
 
@@ -339,70 +234,3 @@ func getRecentVideoIdsWithRSS(channelId string) ([]VideoIdWithChannel, error) {
 	return recentVideoIdsWithChannel, nil
 }
 
-func uploadTrigger(mongoClient *mongo.Client) error {
-	trackedChannels, err := getAllTrackedChannels(mongoClient)
-	if err != nil {
-		return err
-	}
-
-	for _, trackedChannel := range trackedChannels {
-		recentVideoIdsWithChannel, err := getRecentVideoIdsWithRSS(trackedChannel.ChannelId)
-		if err != nil {
-			return err
-		}
-		for _, videoIdWithChannel := range recentVideoIdsWithChannel {
-			// insert won't succeed most of the time
-			_, err := addTrackedVideo(videoIdWithChannel.VideoId, videoIdWithChannel.ChannelId, mongoClient)
-			if err == nil {
-				fmt.Printf("Inserted new tracked video with ID: %s", videoIdWithChannel.VideoId)
-				_, err = getCurrentVideoSnapshotAndAddToDatabase(videoIdWithChannel.VideoId, mongoClient)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
-}
-
-func videoUpdateTrigger(mongoClient *mongo.Client) error {
-	trackedVideos, err := getAllTrackedVideos(mongoClient)
-	if err != nil {
-		return err
-	}
-
-	for _, trackedVideo := range trackedVideos {
-		videoSnapshot, err := getCurrentVideoSnapshot(trackedVideo.VideoId)
-		if err != nil {
-			return err
-		}
-
-		err = addVideoSnapshotToDatabase(videoSnapshot, mongoClient)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func channelUpdateTrigger(mongoClient *mongo.Client) error {
-	trackedChannels, err := getAllTrackedChannels(mongoClient)
-	if err != nil {
-		return err
-	}
-
-	for _, trackedChannel := range trackedChannels {
-		channelSnapshot, err := getCurrentChannelSnapshot(trackedChannel.ChannelId)
-		if err != nil {
-			return err
-		}
-
-		err = addChannelSnapshotToDatabase(channelSnapshot, mongoClient)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
