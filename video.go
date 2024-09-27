@@ -15,6 +15,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+func transformVideoResponseToSnapshot(response *VideoSnapshotResponse) *VideoSnapshot {
+	return &VideoSnapshot{
+		Kind: response.Kind,
+		ETag: response.ETag,
+		Item: response.Items[0],
+	}
+}
+
 func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
 	// trackedVideos, err := getAllTrackedVideos(client)
 	// if err != nil {
@@ -233,4 +241,3 @@ func getRecentVideoIdsWithRSS(channelId string) ([]VideoIdWithChannel, error) {
 
 	return recentVideoIdsWithChannel, nil
 }
-

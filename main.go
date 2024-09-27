@@ -13,8 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var usingFallback = false
-var mongoDatabase = ""
+var (
+	usingFallback = false
+	mongoDatabase = ""
+)
 
 func main() {
 	if err := godotenv.Load(".env.local"); err != nil {
@@ -114,6 +116,15 @@ func main() {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
 		return c.String(http.StatusOK, "Update trigger successful")
+	})
+
+	e.GET("/video-rss", func(c echo.Context) error {
+		channelId := c.QueryParam("channelId")
+		rssFeed, err := getRecentVideoIdsWithRSS(channelId)
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.String(http.StatusOK, rssFeed)
 	})
 
 	e.Logger.Fatal(e.Start(":1323"))
