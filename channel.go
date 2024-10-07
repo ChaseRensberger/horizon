@@ -14,7 +14,25 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedChannel, error) {
+func getTrackedChannelsByHorizonUserId(horizonUserId string, mongoClient *mongo.Client) ([]TrackedChannel, error) {
+	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cursor, err := collection.Find(ctx, bson.D{{Key: "horizonUserId", Value: horizonUserId}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var trackedChannels []TrackedChannel
+	if err = cursor.All(ctx, &trackedChannels); err != nil {
+		return nil, err
+	}
+
+	return trackedChannels, nil
+}
+
+func addTrackedChannel(channelId string, horizonUserId string, mongoClient *mongo.Client) (*TrackedChannel, error) {
 
 	channelSnapshot, err := getCurrentChannelSnapshot(channelId)
 	if err != nil {
@@ -22,8 +40,9 @@ func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedCha
 	}
 
 	newTrackedChannel := TrackedChannel{
-		ChannelId:   channelId,
-		ChannelName: channelSnapshot.Items[0].Snippet.Title,
+		ChannelId:     channelId,
+		ChannelName:   channelSnapshot.Items[0].Snippet.Title,
+		HorizonUserId: horizonUserId,
 	}
 
 	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
@@ -34,7 +53,7 @@ func addTrackedChannel(channelId string, mongoClient *mongo.Client) (*TrackedCha
 		return nil, err
 	}
 
-	fmt.Printf("Inserted new tracked channel with ID: %s", res.InsertedID)
+	fmt.Printf("Inserted new tracked channel for horizon user %s with ID: %s", horizonUserId, res.InsertedID)
 
 	currentChannelSnapshot, err := getCurrentChannelSnapshot(channelId)
 	if err != nil {

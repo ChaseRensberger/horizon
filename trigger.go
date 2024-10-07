@@ -13,7 +13,7 @@ func uploadTrigger(mongoClient *mongo.Client) error {
 	}
 
 	for _, trackedChannel := range trackedChannels {
-		recentVideoIdsWithChannel, err := getRecentVideoIdsWithRSS(trackedChannel.ChannelId)
+		recentVideoIdsWithChannel, err := getRecentVideoIdsWithRSS(trackedChannel.HorizonUserId, mongoClient)
 		if err != nil {
 			return err
 		}

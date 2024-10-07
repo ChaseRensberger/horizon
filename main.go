@@ -50,11 +50,12 @@ func main() {
 
 	e.POST("/tracked-channel", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
+		horizonUserId := c.QueryParam("horizonUserId")
 		key := c.QueryParam("key")
 		if key != HORIZON_AUTH_KEY {
 			return c.String(http.StatusUnauthorized, "Unauthorized")
 		}
-		newTrackedChannel, err := addTrackedChannel(channelId, mongoClient)
+		newTrackedChannel, err := addTrackedChannel(channelId, horizonUserId, mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
@@ -77,10 +78,6 @@ func main() {
 		}
 		return c.JSON(http.StatusOK, videoSnapshots)
 	})
-
-	// e.GET("/tracked-vi-byid", func(c echo.Context) error {
-	// 	channelId := c.QueryParam("channelId")
-	// 	trackedChannel, err := getTrackedChannelById(channelId, mongoClient)
 
 	e.POST("/upload-trigger", func(c echo.Context) error {
 		key := c.QueryParam("key")
@@ -119,12 +116,12 @@ func main() {
 	})
 
 	e.GET("/video-rss", func(c echo.Context) error {
-		channelId := c.QueryParam("channelId")
-		rssFeed, err := getRecentVideoIdsWithRSS(channelId)
+		horizonUserId := c.QueryParam("horizonUserId")
+		rssFeed, err := getRecentVideoIdsWithRSS(horizonUserId, mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		return c.String(http.StatusOK, rssFeed)
+		return c.JSON(http.StatusOK, rssFeed)
 	})
 
 	e.Logger.Fatal(e.Start(":1323"))

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,25 +14,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func transformVideoResponseToSnapshot(response *VideoSnapshotResponse) *VideoSnapshot {
-	return &VideoSnapshot{
-		Kind: response.Kind,
-		ETag: response.ETag,
-		Item: response.Items[0],
-	}
-}
-
 func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
-	// trackedVideos, err := getAllTrackedVideos(client)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// for _, trackedVideo := range trackedVideos {
-	// 	if trackedVideo.VideoId == videoId {
-	// 		return nil, fmt.Errorf("video with ID %s is already being tracked", videoId)
-	// 	}
-	// }
-	//
+	// may need to insert some other video metadata
 	// videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 	// if err != nil {
 	// 	return nil, err
@@ -57,7 +39,7 @@ func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client
 	return &newTrackedVideo, nil
 }
 
-func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]VideoSnapshotResponse, error) {
+func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]VideoSnapshot, error) {
 	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -75,7 +57,7 @@ func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo
 	}
 	defer cursor.Close(ctx)
 
-	var videoSnapshots []VideoSnapshotResponse
+	var videoSnapshots []VideoSnapshot
 	if err = cursor.All(ctx, &videoSnapshots); err != nil {
 		return nil, err
 	}
@@ -101,7 +83,7 @@ func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
 	return trackedVideos, nil
 }
 
-func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshotResponse, mongoClient *mongo.Client) error {
+func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshot, mongoClient *mongo.Client) error {
 	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -115,7 +97,7 @@ func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshotResponse, mongoClien
 	return nil
 }
 
-func getCurrentVideoSnapshot(videoId string) (*VideoSnapshotResponse, error) {
+func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedVideoParts, ",")
 	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, requestedParts, videoId)
@@ -143,7 +125,7 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshotResponse, error) {
 		return nil, err
 	}
 
-	var videoSnapshot VideoSnapshotResponse
+	var videoSnapshot VideoSnapshot
 	if err := json.Unmarshal(responseJson, &videoSnapshot); err != nil {
 		return nil, err
 	}
@@ -154,7 +136,7 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshotResponse, error) {
 	return &videoSnapshot, nil
 }
 
-func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*VideoSnapshotResponse, error) {
+func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*VideoSnapshot, error) {
 	videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 	if err != nil {
 		return nil, err
@@ -210,34 +192,6 @@ func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, er
 	return videoIds, nil
 }
 
-func isShort(video *VideoSnapshotResponse) bool {
+func isShort(video *VideoSnapshot) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
-}
-
-func getRecentVideoIdsWithRSS(channelId string) ([]VideoIdWithChannel, error) {
-	url := fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", channelId)
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("failed to fetch rss feed")
-		return nil, fmt.Errorf("failed to fetch rss feed: %d", resp.StatusCode)
-	}
-
-	var feed RSSVideoSnapshot
-	if err := xml.NewDecoder(resp.Body).Decode(&feed); err != nil {
-		fmt.Println(err)
-		return nil, err
-	}
-
-	var recentVideoIdsWithChannel []VideoIdWithChannel
-	channelName := feed.ChannelName
-	for _, video := range feed.Videos {
-		recentVideoIdsWithChannel = append(recentVideoIdsWithChannel, VideoIdWithChannel{VideoId: video.VideoId, ChannelId: channelId, ChannelName: channelName})
-	}
-
-	return recentVideoIdsWithChannel, nil
 }
