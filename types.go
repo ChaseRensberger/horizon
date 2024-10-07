@@ -21,7 +21,7 @@ type TrackedVideo struct {
 	ChannelId string `bson:"channelId,omitempty"`
 }
 
-type ChannelSnapshot struct {
+type DerivedChannelSnapshot struct {
 	Kind string `json:"kind"`
 	ETag string `json:"etag"`
 	Item struct {
@@ -104,7 +104,7 @@ type ChannelSnapshot struct {
 	RetrievedAt time.Time `bson:"retrievedAt,omitempty"`
 }
 
-type ChannelSnapshotResponse struct {
+type ChannelSnapshot struct {
 	Kind  string `json:"kind"`
 	ETag  string `json:"etag"`
 	Items []struct {

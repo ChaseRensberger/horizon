@@ -67,7 +67,7 @@ func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) 
 	return trackedChannels, nil
 }
 
-func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshotResponse, mongoClient *mongo.Client) error {
+func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient *mongo.Client) error {
 	collection := mongoClient.Database(mongoDatabase).Collection("channel_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -81,7 +81,7 @@ func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshotResponse, mong
 	return nil
 }
 
-func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshotResponse, error) {
+func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
 	requestedParts := strings.Join(usedChannelParts, ",")
 	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, requestedParts, channelId)
@@ -109,7 +109,7 @@ func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshotResponse, erro
 		return nil, err
 	}
 
-	var channelSnapshot ChannelSnapshotResponse
+	var channelSnapshot ChannelSnapshot
 	if err := json.Unmarshal(responseJson, &channelSnapshot); err != nil {
 		return nil, err
 	}

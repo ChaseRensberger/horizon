@@ -148,8 +148,8 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshotResponse, error) {
 		return nil, err
 	}
 
-	videoSnapshot.RetrievedAt = time.Now()
-	videoSnapshot.IsShort = isShort(&videoSnapshot)
+	// videoSnapshot.RetrievedAt = time.Now()
+	// videoSnapshot.IsShort = isShort(&videoSnapshot)
 
 	return &videoSnapshot, nil
 }
