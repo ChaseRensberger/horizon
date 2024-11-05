@@ -1,12 +1,28 @@
 package main
 
 import (
+	"context"
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
+
+func addRSSSnapshotToDatabase(rssVideoSnapshot *RSSVideoSnapshot, mongoClient *mongo.Client) error {
+	collection := mongoClient.Database(mongoDatabase).Collection("rss_video_snapshots")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second
+	defer cancel()
+
+	res, err := collection.InsertOne(ctx, rssVideoSnapshot)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Inserted new rss video snapshot with ID: %s", rs.InsertedID)
+
+	return nil
+}
 
 func getRecentVideoIdsWithRSS(horizonUserId string, mongoClient *mongo.Client) ([]DerivedRSSVideoSnapshot, error) {
 	trackedChannels, err := getTrackedChannelsByHorizonUserId(horizonUserId, mongoClient)

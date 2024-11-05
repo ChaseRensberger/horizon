@@ -70,59 +70,59 @@ func main() {
 		return c.JSON(http.StatusOK, trackedChannels)
 	})
 
-	e.GET("/video-snapshots", func(c echo.Context) error {
-		channelId := c.QueryParam("channelId")
-		videoSnapshots, err := getMostRecentVideoSnapshotsByChannelId(channelId, mongoClient)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, videoSnapshots)
-	})
+	// e.GET("/video-snapshots", func(c echo.Context) error {
+	// 	channelId := c.QueryParam("channelId")
+	// 	videoSnapshots, err := getMostRecentVideoSnapshotsByChannelId(channelId, mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.JSON(http.StatusOK, videoSnapshots)
+	// })
 
-	e.POST("/upload-trigger", func(c echo.Context) error {
-		key := c.QueryParam("key")
-		if key != HORIZON_AUTH_KEY {
-			return c.String(http.StatusUnauthorized, "Unauthorized")
-		}
-		err := uploadTrigger(mongoClient)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.String(http.StatusOK, "Upload trigger successful")
-	})
+	// e.POST("/upload-trigger", func(c echo.Context) error {
+	// 	key := c.QueryParam("key")
+	// 	if key != HORIZON_AUTH_KEY {
+	// 		return c.String(http.StatusUnauthorized, "Unauthorized")
+	// 	}
+	// 	err := uploadTrigger(mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.String(http.StatusOK, "Upload trigger successful")
+	// })
 
-	e.POST("/video-update-trigger", func(c echo.Context) error {
-		key := c.QueryParam("key")
-		if key != HORIZON_AUTH_KEY {
-			return c.String(http.StatusUnauthorized, "Unauthorized")
-		}
-		err := videoUpdateTrigger(mongoClient)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.String(http.StatusOK, "Update trigger successful")
-	})
+	// e.POST("/video-update-trigger", func(c echo.Context) error {
+	// 	key := c.QueryParam("key")
+	// 	if key != HORIZON_AUTH_KEY {
+	// 		return c.String(http.StatusUnauthorized, "Unauthorized")
+	// 	}
+	// 	err := videoUpdateTrigger(mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.String(http.StatusOK, "Update trigger successful")
+	// })
 
-	e.POST("channel-update-trigger", func(c echo.Context) error {
-		key := c.QueryParam("key")
-		if key != HORIZON_AUTH_KEY {
-			return c.String(http.StatusUnauthorized, "Unauthorized")
-		}
-		err := channelUpdateTrigger(mongoClient)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.String(http.StatusOK, "Update trigger successful")
-	})
+	// e.POST("channel-update-trigger", func(c echo.Context) error {
+	// 	key := c.QueryParam("key")
+	// 	if key != HORIZON_AUTH_KEY {
+	// 		return c.String(http.StatusUnauthorized, "Unauthorized")
+	// 	}
+	// 	err := channelUpdateTrigger(mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.String(http.StatusOK, "Update trigger successful")
+	// })
 
-	e.GET("/video-rss", func(c echo.Context) error {
-		horizonUserId := c.QueryParam("horizonUserId")
-		rssFeed, err := getRecentVideoIdsWithRSS(horizonUserId, mongoClient)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, rssFeed)
-	})
+	// e.GET("/video-rss", func(c echo.Context) error {
+	// 	horizonUserId := c.QueryParam("horizonUserId")
+	// 	rssFeed, err := getRecentVideoIdsWithRSS(horizonUserId, mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.JSON(http.StatusOK, rssFeed)
+	// })
 
 	e.Logger.Fatal(e.Start(":1323"))
 }
