@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -12,10 +12,13 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"horizon/config"
+	"horizon/models"
 )
 
-func getTrackedChannelsByHorizonUserId(horizonUserId string, mongoClient *mongo.Client) ([]TrackedChannel, error) {
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
+func GetTrackedChannelsByHorizonUserId(horizonUserId string, mongoClient *mongo.Client) ([]models.TrackedChannel, error) {
+	collection := mongoClient.Database(config.MongoDatabase).Collection("tracked_channels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, bson.D{{Key: "horizonUserId", Value: horizonUserId}})
@@ -24,7 +27,7 @@ func getTrackedChannelsByHorizonUserId(horizonUserId string, mongoClient *mongo.
 	}
 	defer cursor.Close(ctx)
 
-	var trackedChannels []TrackedChannel
+	var trackedChannels []models.TrackedChannel
 	if err = cursor.All(ctx, &trackedChannels); err != nil {
 		return nil, err
 	}
@@ -32,20 +35,20 @@ func getTrackedChannelsByHorizonUserId(horizonUserId string, mongoClient *mongo.
 	return trackedChannels, nil
 }
 
-func addTrackedChannel(channelId string, horizonUserId string, mongoClient *mongo.Client) (*TrackedChannel, error) {
+func AddTrackedChannel(channelId string, horizonUserId string, mongoClient *mongo.Client) (*models.TrackedChannel, error) {
 
-	channelSnapshot, err := getCurrentChannelSnapshot(channelId)
+	channelSnapshot, err := GetCurrentChannelSnapshot(channelId)
 	if err != nil {
 		return nil, err
 	}
 
-	newTrackedChannel := TrackedChannel{
+	newTrackedChannel := models.TrackedChannel{
 		ChannelId:     channelId,
 		ChannelName:   channelSnapshot.Items[0].Snippet.Title,
 		HorizonUserId: horizonUserId,
 	}
 
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
+	collection := mongoClient.Database(config.MongoDatabase).Collection("tracked_channels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, newTrackedChannel)
@@ -55,12 +58,12 @@ func addTrackedChannel(channelId string, horizonUserId string, mongoClient *mong
 
 	fmt.Printf("Inserted new tracked channel for horizon user %s with ID: %s", horizonUserId, res.InsertedID)
 
-	currentChannelSnapshot, err := getCurrentChannelSnapshot(channelId)
+	currentChannelSnapshot, err := GetCurrentChannelSnapshot(channelId)
 	if err != nil {
 		return nil, err
 	}
 
-	err = addChannelSnapshotToDatabase(currentChannelSnapshot, mongoClient)
+	err = AddChannelSnapshotToDatabase(currentChannelSnapshot, mongoClient)
 	if err != nil {
 		return nil, err
 	}
@@ -68,8 +71,8 @@ func addTrackedChannel(channelId string, horizonUserId string, mongoClient *mong
 	return &newTrackedChannel, nil
 }
 
-func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) {
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_channels")
+func GetAllTrackedChannels(mongoClient *mongo.Client) ([]models.TrackedChannel, error) {
+	collection := mongoClient.Database(config.MongoDatabase).Collection("tracked_channels")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, bson.D{})
@@ -78,7 +81,7 @@ func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) 
 	}
 	defer cursor.Close(ctx)
 
-	var trackedChannels []TrackedChannel
+	var trackedChannels []models.TrackedChannel
 	if err = cursor.All(ctx, &trackedChannels); err != nil {
 		return nil, err
 	}
@@ -86,8 +89,8 @@ func getAllTrackedChannels(mongoClient *mongo.Client) ([]TrackedChannel, error) 
 	return trackedChannels, nil
 }
 
-func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient *mongo.Client) error {
-	collection := mongoClient.Database(mongoDatabase).Collection("channel_snapshots")
+func AddChannelSnapshotToDatabase(channelSnapshot *models.ChannelSnapshot, mongoClient *mongo.Client) error {
+	collection := mongoClient.Database(config.MongoDatabase).Collection("channel_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, channelSnapshot)
@@ -100,11 +103,11 @@ func addChannelSnapshotToDatabase(channelSnapshot *ChannelSnapshot, mongoClient 
 	return nil
 }
 
-func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
+func GetCurrentChannelSnapshot(channelId string) (*models.ChannelSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
-	requestedParts := strings.Join(usedChannelParts, ",")
+	requestedParts := strings.Join(models.UsedChannelParts, ",")
 	requestUrl := fmt.Sprintf("%s/channels?part=%s&id=%s", youtubeApiUrl, requestedParts, channelId)
-	if !usingFallback {
+	if !config.UsingFallback {
 		requestUrl = requestUrl + "&key=" + os.Getenv("YOUTUBE_API_KEY")
 	}
 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
@@ -128,7 +131,7 @@ func getCurrentChannelSnapshot(channelId string) (*ChannelSnapshot, error) {
 		return nil, err
 	}
 
-	var channelSnapshot ChannelSnapshot
+	var channelSnapshot models.ChannelSnapshot
 	if err := json.Unmarshal(responseJson, &channelSnapshot); err != nil {
 		return nil, err
 	}

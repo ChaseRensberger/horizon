@@ -11,11 +11,9 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-)
 
-var (
-	usingFallback = false
-	mongoDatabase = ""
+	"horizon/config"
+	"horizon/core"
 )
 
 func main() {
@@ -26,7 +24,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
-	mongoDatabase = os.Getenv("MONGO_DATABASE")
+	config.MongoDatabase = os.Getenv("MONGO_DATABASE")
 
 	defer func() {
 		if err = mongoClient.Disconnect(ctx); err != nil {
@@ -48,22 +46,22 @@ func main() {
 		return c.String(http.StatusOK, "Horizon is up and running!")
 	})
 
-	e.POST("/tracked-channel", func(c echo.Context) error {
+	e.POST("/tracked-channels", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
 		horizonUserId := c.QueryParam("horizonUserId")
 		key := c.QueryParam("key")
 		if key != HORIZON_AUTH_KEY {
 			return c.String(http.StatusUnauthorized, "Unauthorized")
 		}
-		newTrackedChannel, err := addTrackedChannel(channelId, horizonUserId, mongoClient)
+		newTrackedChannel, err := core.AddTrackedChannel(channelId, horizonUserId, mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
 		return c.JSON(http.StatusOK, newTrackedChannel)
 	})
 
-	e.GET("/tracked-channel", func(c echo.Context) error {
-		trackedChannels, err := getAllTrackedChannels(mongoClient)
+	e.GET("/tracked-channels", func(c echo.Context) error {
+		trackedChannels, err := core.GetAllTrackedChannels(mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}

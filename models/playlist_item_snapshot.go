@@ -1,7 +1,8 @@
-package main
+package models
 
 import "time"
 
+// can use to get uploads playlist
 type PlaylistItemSnapshot struct {
 	Kind          string `json:"kind"`
 	ETag          string `json:"etag"`

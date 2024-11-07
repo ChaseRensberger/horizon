@@ -1,4 +1,4 @@
-package main
+package core
 
 import (
 	"context"
@@ -12,21 +12,24 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+
+	"horizon/config"
+	"horizon/models"
 )
 
-func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*TrackedVideo, error) {
+func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client) (*models.TrackedVideo, error) {
 	// may need to insert some other video metadata
 	// videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 	// if err != nil {
 	// 	return nil, err
 	// }
 
-	newTrackedVideo := TrackedVideo{
+	newTrackedVideo := models.TrackedVideo{
 		VideoId:   videoId,
 		ChannelId: channelId,
 	}
 
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
+	collection := mongoClient.Database(config.MongoDatabase).Collection("tracked_videos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, newTrackedVideo)
@@ -39,8 +42,8 @@ func addTrackedVideo(videoId string, channelId string, mongoClient *mongo.Client
 	return &newTrackedVideo, nil
 }
 
-func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]VideoSnapshot, error) {
-	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
+func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo.Client) ([]models.VideoSnapshot, error) {
+	collection := mongoClient.Database(config.MongoDatabase).Collection("video_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -57,7 +60,7 @@ func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo
 	}
 	defer cursor.Close(ctx)
 
-	var videoSnapshots []VideoSnapshot
+	var videoSnapshots []models.VideoSnapshot
 	if err = cursor.All(ctx, &videoSnapshots); err != nil {
 		return nil, err
 	}
@@ -65,8 +68,8 @@ func getMostRecentVideoSnapshotsByChannelId(channelId string, mongoClient *mongo
 	return videoSnapshots, nil
 }
 
-func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
-	collection := mongoClient.Database(mongoDatabase).Collection("tracked_videos")
+func getAllTrackedVideos(mongoClient *mongo.Client) ([]models.TrackedVideo, error) {
+	collection := mongoClient.Database(config.MongoDatabase).Collection("tracked_videos")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cursor, err := collection.Find(ctx, bson.D{})
@@ -75,7 +78,7 @@ func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
 	}
 	defer cursor.Close(ctx)
 
-	var trackedVideos []TrackedVideo
+	var trackedVideos []models.TrackedVideo
 	if err = cursor.All(ctx, &trackedVideos); err != nil {
 		return nil, err
 	}
@@ -83,8 +86,8 @@ func getAllTrackedVideos(mongoClient *mongo.Client) ([]TrackedVideo, error) {
 	return trackedVideos, nil
 }
 
-func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshot, mongoClient *mongo.Client) error {
-	collection := mongoClient.Database(mongoDatabase).Collection("video_snapshots")
+func addVideoSnapshotToDatabase(videoSnapshot *models.VideoSnapshot, mongoClient *mongo.Client) error {
+	collection := mongoClient.Database(config.MongoDatabase).Collection("video_snapshots")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	res, err := collection.InsertOne(ctx, videoSnapshot)
@@ -97,11 +100,11 @@ func addVideoSnapshotToDatabase(videoSnapshot *VideoSnapshot, mongoClient *mongo
 	return nil
 }
 
-func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
+func getCurrentVideoSnapshot(videoId string) (*models.VideoSnapshot, error) {
 	youtubeApiUrl := os.Getenv("YOUTUBE_API_URL")
-	requestedParts := strings.Join(usedVideoParts, ",")
+	requestedParts := strings.Join(models.UsedVideoParts, ",")
 	requestUrl := fmt.Sprintf("%s/videos?part=%s&id=%s", youtubeApiUrl, requestedParts, videoId)
-	if !usingFallback {
+	if !config.UsingFallback {
 		requestUrl = requestUrl + "&key=" + os.Getenv("YOUTUBE_API_KEY")
 	}
 	req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
@@ -125,7 +128,7 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 		return nil, err
 	}
 
-	var videoSnapshot VideoSnapshot
+	var videoSnapshot models.VideoSnapshot
 	if err := json.Unmarshal(responseJson, &videoSnapshot); err != nil {
 		return nil, err
 	}
@@ -136,7 +139,7 @@ func getCurrentVideoSnapshot(videoId string) (*VideoSnapshot, error) {
 	return &videoSnapshot, nil
 }
 
-func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*VideoSnapshot, error) {
+func getCurrentVideoSnapshotAndAddToDatabase(videoId string, mongoClient *mongo.Client) (*models.VideoSnapshot, error) {
 	videoSnapshot, err := getCurrentVideoSnapshot(videoId)
 	if err != nil {
 		return nil, err
@@ -178,7 +181,7 @@ func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, er
 		return nil, err
 	}
 
-	var playlistItemSnapshot PlaylistItemSnapshot
+	var playlistItemSnapshot models.PlaylistItemSnapshot
 	if err := json.Unmarshal(responseJson, &playlistItemSnapshot); err != nil {
 		return nil, err
 	}
@@ -192,6 +195,6 @@ func getRecentVideoIdsFromChannel(channelId string, numVideos int) ([]string, er
 	return videoIds, nil
 }
 
-func isShort(video *VideoSnapshot) bool {
+func isShort(video *models.VideoSnapshot) bool {
 	return strings.Contains(video.Items[0].ContentDetails.Duration, "M")
 }

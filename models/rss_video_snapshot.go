@@ -1,4 +1,4 @@
-package main
+package models
 
 type RSSVideoSnapshot struct {
 	ChannelName string `xml:"title"`
@@ -28,20 +28,4 @@ type RSSVideoSnapshot struct {
 			} `xml:"http://search.yahoo.com/mrss/ community"`
 		} `xml:"http://search.yahoo.com/mrss/ group"`
 	} `xml:"entry"`
-}
-
-type DerivedRSSVideoSnapshot struct {
-	ChannelName string
-	ChannelId   string
-	ChannelLink string
-	Videos      []struct {
-		VideoId   string
-		Title     string
-		Published string
-		Updated   string
-		Link      string
-		Thumbnail string
-		Views     string
-		Rating    string
-	}
 }
