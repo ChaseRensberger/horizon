@@ -33,12 +33,12 @@ func main() {
 	}()
 
 	HORIZON_AUTH_KEY := os.Getenv("HORIZON_AUTH_KEY")
-	ALLOWED_ROUTES := []string{os.Getenv("PRIMARY_ALLOWED_ROUTE")}
+	// ALLOWED_ROUTES := []string{os.Getenv("PRIMARY_ALLOWED_ROUTE")}
 
 	e := echo.New()
 
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: ALLOWED_ROUTES,
+		// AllowOrigins: ALLOWED_ROUTES,
 		AllowMethods: []string{echo.GET, echo.PUT, echo.POST, echo.DELETE},
 	}))
 
