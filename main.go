@@ -17,8 +17,10 @@ import (
 )
 
 func main() {
-	if err := godotenv.Load(".env.local"); err != nil {
-		panic(err)
+	if _, err := os.Stat(".env.local"); err == nil {
+		if err := godotenv.Load(".env.local"); err != nil {
+			panic(err)
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
