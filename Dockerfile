@@ -8,7 +8,13 @@ RUN go mod download
 
 COPY *.go ./
 
-COPY .env.* ./
+# COPY .env.* ./
+
+COPY core/ ./core/
+
+COPY models/ ./models/
+
+COPY config/ ./config/
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /main
 

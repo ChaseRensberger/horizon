@@ -48,12 +48,11 @@ func main() {
 
 	e.POST("/tracked-channels", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
-		horizonUserId := c.QueryParam("horizonUserId")
 		key := c.QueryParam("key")
 		if key != HORIZON_AUTH_KEY {
 			return c.String(http.StatusUnauthorized, "Unauthorized")
 		}
-		newTrackedChannel, err := core.AddTrackedChannel(channelId, horizonUserId, mongoClient)
+		newTrackedChannel, err := core.AddTrackedChannel(channelId, mongoClient)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}

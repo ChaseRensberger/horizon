@@ -35,7 +35,7 @@ func GetTrackedChannelsByHorizonUserId(horizonUserId string, mongoClient *mongo.
 	return trackedChannels, nil
 }
 
-func AddTrackedChannel(channelId string, horizonUserId string, mongoClient *mongo.Client) (*models.TrackedChannel, error) {
+func AddTrackedChannel(channelId string, mongoClient *mongo.Client) (*models.TrackedChannel, error) {
 
 	channelSnapshot, err := GetCurrentChannelSnapshot(channelId)
 	if err != nil {
@@ -43,9 +43,9 @@ func AddTrackedChannel(channelId string, horizonUserId string, mongoClient *mong
 	}
 
 	newTrackedChannel := models.TrackedChannel{
-		ChannelId:     channelId,
-		ChannelName:   channelSnapshot.Items[0].Snippet.Title,
-		HorizonUserId: horizonUserId,
+		ChannelId:   channelId,
+		ChannelName: channelSnapshot.Items[0].Snippet.Title,
+		// HorizonUserId: horizonUserId,
 	}
 
 	collection := mongoClient.Database(config.MongoDatabase).Collection("tracked_channels")
@@ -56,7 +56,7 @@ func AddTrackedChannel(channelId string, horizonUserId string, mongoClient *mong
 		return nil, err
 	}
 
-	fmt.Printf("Inserted new tracked channel for horizon user %s with ID: %s", horizonUserId, res.InsertedID)
+	fmt.Printf("Inserted new tracked channel with ID: %s", res.InsertedID)
 
 	currentChannelSnapshot, err := GetCurrentChannelSnapshot(channelId)
 	if err != nil {
