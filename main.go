@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"horizon/config"
+	"horizon/core"
 	"net/http"
 	"os"
 	"time"
@@ -12,8 +14,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 
-	"horizon/config"
-	"horizon/core"
+	"github.com/workos/workos-go/v3/pkg/sso"
 )
 
 func main() {
@@ -35,6 +36,12 @@ func main() {
 	}()
 
 	HORIZON_AUTH_KEY := os.Getenv("HORIZON_AUTH_KEY")
+	workosApiKey := os.Getenv("WORKOS_API_KEY")
+	workosClientID := os.Getenv("WORKOS_CLIENT_ID")
+	mutubeRedirectURI := os.Getenv("MUTUBE_REDIRECT_URI")
+	workosOrgID := "org_test_idp"
+	sso.Configure(workosApiKey, workosClientID)
+
 	// ALLOWED_ROUTES := []string{os.Getenv("PRIMARY_ALLOWED_ROUTE")}
 
 	e := echo.New()
@@ -46,6 +53,37 @@ func main() {
 
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Horizon is up and running!")
+	})
+
+	e.GET("/auth", func(c echo.Context) error {
+		url, err := sso.GetAuthorizationURL(sso.GetAuthorizationURLOpts{
+			Organization: workosOrgID,
+			RedirectURI:  mutubeRedirectURI,
+		})
+		if err != nil {
+			return c.String(http.StatusInternalServerError, err.Error())
+		}
+		return c.Redirect(http.StatusFound, url.String())
+	})
+
+	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
+		opts := sso.GetProfileAndTokenOpts{
+			Code: r.URL.Query().Get("code"),
+		}
+
+		profileAndToken, err := sso.GetProfileAndToken(r.Context(), opts)
+
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+
+		profile := profileAndToken.Profile
+
+		if profile.OrganizationID != workosOrgID {
+			http.Error(w, "Unauthorized", http.StatusForbidden)
+		}
+
+		http.Redirect(w, r, "localhost:3000/browse", http.StatusSeeOther)
 	})
 
 	e.POST("/tracked-channels", func(c echo.Context) error {
