@@ -4,6 +4,7 @@ import (
 	"context"
 	"horizon/config"
 	"horizon/core"
+	"horizon/mutube"
 	"net/http"
 	"os"
 	"time"
@@ -13,8 +14,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"github.com/workos/workos-go/v3/pkg/sso"
 )
 
 func main() {
@@ -36,11 +35,6 @@ func main() {
 	}()
 
 	HORIZON_AUTH_KEY := os.Getenv("HORIZON_AUTH_KEY")
-	workosApiKey := os.Getenv("WORKOS_API_KEY")
-	workosClientID := os.Getenv("WORKOS_CLIENT_ID")
-	mutubeRedirectURI := os.Getenv("MUTUBE_REDIRECT_URI")
-	workosOrgID := "org_test_idp"
-	sso.Configure(workosApiKey, workosClientID)
 
 	// ALLOWED_ROUTES := []string{os.Getenv("PRIMARY_ALLOWED_ROUTE")}
 
@@ -55,36 +49,7 @@ func main() {
 		return c.String(http.StatusOK, "Horizon is up and running!")
 	})
 
-	e.GET("/auth", func(c echo.Context) error {
-		url, err := sso.GetAuthorizationURL(sso.GetAuthorizationURLOpts{
-			Organization: workosOrgID,
-			RedirectURI:  mutubeRedirectURI,
-		})
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-		return c.Redirect(http.StatusFound, url.String())
-	})
-
-	http.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
-		opts := sso.GetProfileAndTokenOpts{
-			Code: r.URL.Query().Get("code"),
-		}
-
-		profileAndToken, err := sso.GetProfileAndToken(r.Context(), opts)
-
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-
-		profile := profileAndToken.Profile
-
-		if profile.OrganizationID != workosOrgID {
-			http.Error(w, "Unauthorized", http.StatusForbidden)
-		}
-
-		http.Redirect(w, r, "localhost:3000/browse", http.StatusSeeOther)
-	})
+	mutube.InitializeAuthRoutes(e)
 
 	e.POST("/tracked-channels", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
@@ -106,6 +71,9 @@ func main() {
 		}
 		return c.JSON(http.StatusOK, trackedChannels)
 	})
+
+	e.Logger.Fatal(e.Start(":1323")) // http server
+	// e.Logger.Fatal(e.StartTLS(":1323", "server.crt", "server.key")) // https server
 
 	// e.GET("/video-snapshots", func(c echo.Context) error {
 	// 	channelId := c.QueryParam("channelId")
@@ -160,6 +128,4 @@ func main() {
 	// 	}
 	// 	return c.JSON(http.StatusOK, rssFeed)
 	// })
-
-	e.Logger.Fatal(e.Start(":1323"))
 }

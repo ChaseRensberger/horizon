@@ -2,5 +2,7 @@
 .vscode
 database.db
 .DS_Store
+server.crt
+server.key
 /examples
 /data
