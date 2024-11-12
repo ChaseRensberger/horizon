@@ -4,7 +4,6 @@ import (
 	"context"
 	"horizon/config"
 	"horizon/core"
-	"horizon/mutube"
 	"net/http"
 	"os"
 	"time"
@@ -48,8 +47,6 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Horizon is up and running!")
 	})
-
-	mutube.InitializeAuthRoutes(e)
 
 	e.POST("/tracked-channels", func(c echo.Context) error {
 		channelId := c.QueryParam("channelId")
