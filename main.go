@@ -1,18 +1,14 @@
 package main
 
 import (
-	"context"
-	"horizon/config"
-	"horizon/core"
+	// "horizon/core"
+	"horizon/dynamo"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -22,18 +18,7 @@ func main() {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	mongoClient, err := mongo.Connect(ctx, options.Client().ApplyURI(os.Getenv("MONGODB_URI")))
-	config.MongoDatabase = os.Getenv("MONGO_DATABASE")
-
-	defer func() {
-		if err = mongoClient.Disconnect(ctx); err != nil {
-			panic(err)
-		}
-	}()
-
-	HORIZON_AUTH_KEY := os.Getenv("HORIZON_AUTH_KEY")
+	// HORIZON_AUTH_KEY := os.Getenv("HORIZON_AUTH_KEY")
 
 	// ALLOWED_ROUTES := []string{os.Getenv("PRIMARY_ALLOWED_ROUTE")}
 
@@ -48,28 +33,40 @@ func main() {
 		return c.String(http.StatusOK, "Horizon is up and running!")
 	})
 
-	e.POST("/tracked-channels", func(c echo.Context) error {
-		channelId := c.QueryParam("channelId")
-		key := c.QueryParam("key")
-		if key != HORIZON_AUTH_KEY {
-			return c.String(http.StatusUnauthorized, "Unauthorized")
-		}
-		newTrackedChannel, err := core.AddTrackedChannel(channelId, mongoClient)
+	e.GET("/playground", func(c echo.Context) error {
+		client, err := dynamo.InitializeDynamoDBClient()
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		return c.JSON(http.StatusOK, newTrackedChannel)
-	})
-
-	e.GET("/tracked-channels", func(c echo.Context) error {
-		trackedChannels, err := core.GetAllTrackedChannels(mongoClient)
+		tables, err := dynamo.GetTables(client)
 		if err != nil {
 			return c.String(http.StatusInternalServerError, err.Error())
 		}
-		return c.JSON(http.StatusOK, trackedChannels)
+		return c.JSON(http.StatusOK, tables)
 	})
 
 	e.Logger.Fatal(e.Start(":1323")) // http server
+
+	// e.POST("/tracked-channels", func(c echo.Context) error {
+	// 	channelId := c.QueryParam("channelId")
+	// 	key := c.QueryParam("key")
+	// 	if key != HORIZON_AUTH_KEY {
+	// 		return c.String(http.StatusUnauthorized, "Unauthorized")
+	// 	}
+	// 	newTrackedChannel, err := core.AddTrackedChannel(channelId, mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.JSON(http.StatusOK, newTrackedChannel)
+	// })
+	//
+	// e.GET("/tracked-channels", func(c echo.Context) error {
+	// 	trackedChannels, err := core.GetAllTrackedChannels(mongoClient)
+	// 	if err != nil {
+	// 		return c.String(http.StatusInternalServerError, err.Error())
+	// 	}
+	// 	return c.JSON(http.StatusOK, trackedChannels)
+	// })
 	// e.Logger.Fatal(e.StartTLS(":1323", "server.crt", "server.key")) // https server
 
 	// e.GET("/video-snapshots", func(c echo.Context) error {
